@@ -186,3 +186,4 @@ mlx-trace.json
 uv.lock
 tts-outputs
 /tools/
+/.gradle/
