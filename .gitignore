@@ -187,3 +187,9 @@ uv.lock
 tts-outputs
 /tools/
 /.gradle/
+.gradle/file-system.probe
+.gradle/9.5.1/executionHistory/executionHistory.bin
+.gradle/9.5.1/executionHistory/executionHistory.lock
+.gradle/9.5.1/fileHashes/fileHashes.bin
+.gradle/9.5.1/fileHashes/fileHashes.lock
+.gradle/buildOutputCleanup/buildOutputCleanup.lock
