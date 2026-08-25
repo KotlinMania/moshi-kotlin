@@ -18,20 +18,21 @@ data class TtsStreamingConfig(
     val speakerCondNSpeakers: Int,
 ) {
     companion object {
-        fun v202501(): TtsStreamingConfig = TtsStreamingConfig(
-            acousticDelay = 2,
-            textEopToken = 0u,
-            textBosToken = 1u,
-            textEosToken = 2u,
-            textPadToken = 3u,
-            textStartToken = 8000u,
-            textAudioDelayInTokens = 25,
-            maxConsecutivePads = 10,
-            extraSteps = 5,
-            speakerCondDurationS = 10.0,
-            speakerCondDim = 2048,
-            speakerCondNSpeakers = 5,
-        )
+        fun v202501(): TtsStreamingConfig =
+            TtsStreamingConfig(
+                acousticDelay = 2,
+                textEopToken = 0u,
+                textBosToken = 1u,
+                textEosToken = 2u,
+                textPadToken = 3u,
+                textStartToken = 8000u,
+                textAudioDelayInTokens = 25,
+                maxConsecutivePads = 10,
+                extraSteps = 5,
+                speakerCondDurationS = 10.0,
+                speakerCondDim = 2048,
+                speakerCondNSpeakers = 5,
+            )
     }
 }
 

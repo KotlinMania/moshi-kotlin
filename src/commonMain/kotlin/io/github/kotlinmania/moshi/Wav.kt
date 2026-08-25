@@ -7,6 +7,7 @@ fun Double.toI16(): Short = (this.coerceIn(-1.0, 1.0) * 32767.0).toInt().toShort
 
 interface ByteArraySink {
     fun write(bytes: ByteArray)
+
     fun writeIntLittleEndian(value: Int) {
         write(
             byteArrayOf(

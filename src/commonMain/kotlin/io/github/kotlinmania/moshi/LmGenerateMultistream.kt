@@ -13,35 +13,38 @@ data class MultiStreamConfig(
     val textStartToken: UInt,
 ) {
     companion object {
-        fun v01(): MultiStreamConfig = MultiStreamConfig(
-            generatedAudioCodebooks = 8,
-            inputAudioCodebooks = 8,
-            audioVocabSize = 2049,
-            acousticDelay = 2,
-            textEopToken = 0u,
-            textPadToken = 3u,
-            textStartToken = 32000u,
-        )
+        fun v01(): MultiStreamConfig =
+            MultiStreamConfig(
+                generatedAudioCodebooks = 8,
+                inputAudioCodebooks = 8,
+                audioVocabSize = 2049,
+                acousticDelay = 2,
+                textEopToken = 0u,
+                textPadToken = 3u,
+                textStartToken = 32000u,
+            )
 
-        fun v01TwoWays(): MultiStreamConfig = MultiStreamConfig(
-            generatedAudioCodebooks = 16,
-            inputAudioCodebooks = 0,
-            audioVocabSize = 2049,
-            acousticDelay = 2,
-            textEopToken = 0u,
-            textPadToken = 3u,
-            textStartToken = 32000u,
-        )
+        fun v01TwoWays(): MultiStreamConfig =
+            MultiStreamConfig(
+                generatedAudioCodebooks = 16,
+                inputAudioCodebooks = 0,
+                audioVocabSize = 2049,
+                acousticDelay = 2,
+                textEopToken = 0u,
+                textPadToken = 3u,
+                textStartToken = 32000u,
+            )
 
-        fun v01OneWay(): MultiStreamConfig = MultiStreamConfig(
-            generatedAudioCodebooks = 8,
-            inputAudioCodebooks = 0,
-            audioVocabSize = 2049,
-            acousticDelay = 2,
-            textEopToken = 0u,
-            textPadToken = 3u,
-            textStartToken = 32000u,
-        )
+        fun v01OneWay(): MultiStreamConfig =
+            MultiStreamConfig(
+                generatedAudioCodebooks = 8,
+                inputAudioCodebooks = 0,
+                audioVocabSize = 2049,
+                acousticDelay = 2,
+                textEopToken = 0u,
+                textPadToken = 3u,
+                textStartToken = 32000u,
+            )
     }
 
     fun audioPadToken(): UInt = (audioVocabSize - 1).toUInt()
