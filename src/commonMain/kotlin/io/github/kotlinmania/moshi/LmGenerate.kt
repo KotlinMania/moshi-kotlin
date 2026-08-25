@@ -2,8 +2,12 @@
 package io.github.kotlinmania.moshi
 
 sealed class Token {
-    data class Set(val value: UInt) : Token()
+    data class Set(
+        val value: UInt,
+    ) : Token()
+
     data object Ungenerated : Token()
+
     data object LiteralZero : Token()
 }
 

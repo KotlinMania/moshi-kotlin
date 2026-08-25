@@ -24,8 +24,13 @@ data class LmConfig(
 )
 
 sealed class ConditionerConfig {
-    data class Lut(val config: LutConfig) : ConditionerConfig()
-    data class ContinuousAttribute(val config: ContinuousAttributeConfig) : ConditionerConfig()
+    data class Lut(
+        val config: LutConfig,
+    ) : ConditionerConfig()
+
+    data class ContinuousAttribute(
+        val config: ContinuousAttributeConfig,
+    ) : ConditionerConfig()
 }
 
 data class LutConfig(
