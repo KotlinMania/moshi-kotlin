@@ -26,6 +26,28 @@
 @rem Set local scope for the variables with windows NT shell
 if "%OS%"=="Windows_NT" setlocal
 
+@rem Prepare writable Android user settings before Gradle; preserve an explicit setting.
+if defined ANDROID_USER_HOME goto androidUserHomeReady
+if defined RUNNER_TEMP set "ANDROID_USER_HOME=%RUNNER_TEMP%\kotlinmania-android-user-home"
+if defined ANDROID_USER_HOME goto androidUserHomeReady
+if defined TEMP set "ANDROID_USER_HOME=%TEMP%\kotlinmania-android-user-home"
+if defined ANDROID_USER_HOME goto androidUserHomeReady
+if defined TMP set "ANDROID_USER_HOME=%TMP%\kotlinmania-android-user-home"
+:androidUserHomeReady
+if not defined ANDROID_USER_HOME (
+  echo ERROR: Set ANDROID_USER_HOME or a writable temporary directory. 1>&2
+  goto fail
+)
+if not exist "%ANDROID_USER_HOME%" mkdir "%ANDROID_USER_HOME%"
+set "ANDROID_USER_PROBE=%ANDROID_USER_HOME%\.write-check-%RANDOM%-%RANDOM%.tmp"
+echo writable>"%ANDROID_USER_PROBE%"
+if errorlevel 1 (
+  echo ERROR: ANDROID_USER_HOME is not writable. 1>&2
+  goto fail
+)
+del /q "%ANDROID_USER_PROBE%"
+set "ANDROID_USER_PROBE="
+
 set DIRNAME=%~dp0
 if "%DIRNAME%"=="" set DIRNAME=.
 @rem This is normally unused

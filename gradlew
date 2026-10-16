@@ -64,6 +64,27 @@
 #
 ##############################################################################
 
+# Android tools need writable user settings before Gradle starts.
+# Preserve an explicit location; SDK installation remains controlled by ANDROID_HOME.
+if [ "${ANDROID_USER_HOME+x}" != x ]; then
+    for android_user_temp in "${RUNNER_TEMP:-}" "${TMPDIR:-}" "${TEMP:-}" "${TMP:-}" /tmp; do
+        [ -n "$android_user_temp" ] && [ -d "$android_user_temp" ] && [ -w "$android_user_temp" ] || continue
+        ANDROID_USER_HOME="$android_user_temp/kotlinmania-android-user-home"
+        mkdir -p "$ANDROID_USER_HOME" && [ -w "$ANDROID_USER_HOME" ] && break
+    done
+fi
+if [ -z "${ANDROID_USER_HOME:-}" ] || ! mkdir -p "$ANDROID_USER_HOME"; then
+    echo "ERROR: ANDROID_USER_HOME must name a writable directory." >&2
+    exit 1
+fi
+android_user_probe=$(mktemp "$ANDROID_USER_HOME/.write-check.XXXXXX") || {
+    echo "ERROR: ANDROID_USER_HOME is not writable: $ANDROID_USER_HOME" >&2
+    exit 1
+}
+rm -f "$android_user_probe"
+export ANDROID_USER_HOME
+unset android_user_temp android_user_probe
+
 # Attempt to set APP_HOME
 
 # Resolve links: $0 may be a link
