@@ -5,10 +5,10 @@ Based on AST analysis, here are the concrete next steps.
 ## Summary
 
 - **Files Present:** 10/18 (55.6%)
-- **Function parity:** 13/296 matched (target 16) — 4.4%
-- **Class/type parity:** 11/100 matched (target 29) — 11.0%
-- **Combined symbol parity:** 24/396 matched (target 45) — 6.1%
-- **Average inline-code cosine:** 0.09 (function body across 9 matched files)
+- **Function parity:** 13/296 matched (target 26) — 4.4%
+- **Class/type parity:** 12/100 matched (target 33) — 12.0%
+- **Combined symbol parity:** 25/396 matched (target 59) — 6.3%
+- **Average inline-code cosine:** 0.11 (function body across 9 matched files)
 - **Average documentation cosine:** 0.00 (doc text across 9 matched files)
 - **Cheat-zeroed Files:** 6
 - **Critical Issues:** 10 files with <0.60 function similarity
@@ -143,20 +143,20 @@ Every matched file is listed below with function and type symbol parity.
 ### 9. wav
 
 - **Target:** `moshi.Wav [PROVENANCE-FALLBACK]`
-- **Similarity:** 0.37
+- **Similarity:** 0.53
 - **Dependents:** 0
-- **Priority Score:** 10506.3
-- **Functions:** 4/4 matched (target 7)
+- **Priority Score:** 504.7
+- **Functions:** 4/4 matched (target 17)
 - **Missing functions:** _none_
-- **Types:** 0/1 matched
-- **Missing types:** `Sample`
+- **Types:** 1/1 matched (target 5)
+- **Missing types:** _none_
 - **Provenance warning:** port-lint provenance header matched only after fallback normalization: `moshi-core/src/wav.rs` vs expected `wav.rs`
 - **Proposed provenance header:** `// port-lint: source wav.rs` (current: `// port-lint: source moshi-core/src/wav.rs`)
 - **Lint issues:** 1
 
 ### 10. lib
 
-- **Target:** `moshi.Lib [STUB] [PROVENANCE-FALLBACK]`
+- **Target:** `moshi.NormType [STUB] [PROVENANCE-FALLBACK]`
 - **Similarity:** 0.00
 - **Dependents:** 0
 - **Priority Score:** 110.0
