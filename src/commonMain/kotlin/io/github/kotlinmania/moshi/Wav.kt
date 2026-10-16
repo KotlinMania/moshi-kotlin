@@ -1,9 +1,27 @@
 // port-lint: source moshi-core/src/wav.rs
 package io.github.kotlinmania.moshi
 
+interface Sample {
+    fun toI16(): Short
+}
+
 fun Float.toI16(): Short = (this.coerceIn(-1f, 1f) * 32767f).toInt().toShort()
 
 fun Double.toI16(): Short = (this.coerceIn(-1.0, 1.0) * 32767.0).toInt().toShort()
+
+fun Short.toI16(): Short = this
+
+class FloatSample(val value: Float) : Sample {
+    override fun toI16(): Short = value.toI16()
+}
+
+class DoubleSample(val value: Double) : Sample {
+    override fun toI16(): Short = value.toI16()
+}
+
+class ShortSample(val value: Short) : Sample {
+    override fun toI16(): Short = value
+}
 
 interface ByteArraySink {
     fun write(bytes: ByteArray)
@@ -64,7 +82,49 @@ fun writePcmInWav(sink: ByteArraySink, samples: ShortArray): Int {
     return samples.size * 2
 }
 
+fun writePcmInWav(sink: ByteArraySink, samples: FloatArray): Int {
+    for (sample in samples) {
+        sink.writeShortLittleEndian(sample.toI16())
+    }
+    return samples.size * 2
+}
+
+fun writePcmInWav(sink: ByteArraySink, samples: DoubleArray): Int {
+    for (sample in samples) {
+        sink.writeShortLittleEndian(sample.toI16())
+    }
+    return samples.size * 2
+}
+
+fun <S : Sample> writePcmInWav(sink: ByteArraySink, samples: List<S>): Int {
+    for (sample in samples) {
+        sink.writeShortLittleEndian(sample.toI16())
+    }
+    return samples.size * 2
+}
+
 fun writePcmAsWav(sink: ByteArraySink, samples: ShortArray, sampleRate: Int) {
+    val chunkSize = 12u + 24u + samples.size.toUInt() * 2u
+    val dataSize = samples.size.toUInt() * 2u
+    writeWavHeader(sink, sampleRate, chunkSize.toInt(), dataSize.toInt())
+    writePcmInWav(sink, samples)
+}
+
+fun writePcmAsWav(sink: ByteArraySink, samples: FloatArray, sampleRate: Int) {
+    val chunkSize = 12u + 24u + samples.size.toUInt() * 2u
+    val dataSize = samples.size.toUInt() * 2u
+    writeWavHeader(sink, sampleRate, chunkSize.toInt(), dataSize.toInt())
+    writePcmInWav(sink, samples)
+}
+
+fun writePcmAsWav(sink: ByteArraySink, samples: DoubleArray, sampleRate: Int) {
+    val chunkSize = 12u + 24u + samples.size.toUInt() * 2u
+    val dataSize = samples.size.toUInt() * 2u
+    writeWavHeader(sink, sampleRate, chunkSize.toInt(), dataSize.toInt())
+    writePcmInWav(sink, samples)
+}
+
+fun <S : Sample> writePcmAsWav(sink: ByteArraySink, samples: List<S>, sampleRate: Int) {
     val chunkSize = 12u + 24u + samples.size.toUInt() * 2u
     val dataSize = samples.size.toUInt() * 2u
     writeWavHeader(sink, sampleRate, chunkSize.toInt(), dataSize.toInt())
