@@ -2,7 +2,6 @@ package io.github.kotlinmania.moshi
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class TestByteArraySink : ByteArraySink {
     private val buffer = mutableListOf<Byte>()
@@ -98,11 +97,12 @@ class WavTest {
     @Test
     fun testWritePcmAsWavSampleList() {
         val sink = TestByteArraySink()
-        val samples = listOf(
-            FloatSample(0.1f),
-            DoubleSample(-0.2),
-            ShortSample(500),
-        )
+        val samples =
+            listOf(
+                FloatSample(0.1f),
+                DoubleSample(-0.2),
+                ShortSample(500),
+            )
         val sampleRate = 44100
 
         writePcmAsWav(sink, samples, sampleRate)

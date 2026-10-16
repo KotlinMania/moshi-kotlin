@@ -11,15 +11,21 @@ fun Double.toI16(): Short = (this.coerceIn(-1.0, 1.0) * 32767.0).toInt().toShort
 
 fun Short.toI16(): Short = this
 
-class FloatSample(val value: Float) : Sample {
+class FloatSample(
+    val value: Float,
+) : Sample {
     override fun toI16(): Short = value.toI16()
 }
 
-class DoubleSample(val value: Double) : Sample {
+class DoubleSample(
+    val value: Double,
+) : Sample {
     override fun toI16(): Short = value.toI16()
 }
 
-class ShortSample(val value: Short) : Sample {
+class ShortSample(
+    val value: Short,
+) : Sample {
     override fun toI16(): Short = value
 }
 
