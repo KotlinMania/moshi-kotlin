@@ -1379,14 +1379,16 @@ gradle.includedBuilds.forEach { ib ->
     val ibPropsFile = File(ib.projectDir, "gradle.properties")
     if (ibPropsFile.exists()) {
         val ibProps =
-            java.util.Properties().apply {
-                ibPropsFile.inputStream().use { load(it) }
-            }
-        val ibFfiRaw = ibProps.getProperty("project.ffi.name", "Ffi").trim()
+            ibPropsFile
+                .readLines()
+                .map { it.trim() }
+                .filter { it.isNotEmpty() && !it.startsWith("#") && '=' in it }
+                .associate { it.substringBefore('=').trim() to it.substringAfter('=').trim() }
+        val ibFfiRaw = (ibProps["project.ffi.name"] ?: "Ffi").trim()
         val ibFfiName = ibFfiRaw.replaceFirstChar { it.uppercase() }
         val ibFfiLower = ibFfiRaw.lowercase()
-        val ibJvmFfi = ibProps.getProperty("project.ffi.jvm", "false").trim().lowercase() == "true"
-        val ibNapiFfi = ibProps.getProperty("project.ffi.napi", "false").trim().lowercase() == "true"
+        val ibJvmFfi = (ibProps["project.ffi.jvm"] ?: "false").trim().lowercase() == "true"
+        val ibNapiFfi = (ibProps["project.ffi.napi"] ?: "false").trim().lowercase() == "true"
 
         if (ibJvmFfi) {
             extraJavaLibPaths.add(File(ib.projectDir, "build/natives").absolutePath)
