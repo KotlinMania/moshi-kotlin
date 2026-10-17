@@ -5,9 +5,9 @@ Based on AST analysis, here are the concrete next steps.
 ## Summary
 
 - **Files Present:** 17/18 (94.4%)
-- **Function parity:** 336/368 matched (target 383) — 91.3%
-- **Class/type parity:** 62/100 matched (target 125) — 62.0%
-- **Combined symbol parity:** 398/468 matched (target 508) — 85.0%
+- **Function parity:** 335/368 matched (target 409) — 91.0%
+- **Class/type parity:** 61/100 matched (target 127) — 61.0%
+- **Combined symbol parity:** 396/468 matched (target 536) — 84.6%
 - **Average inline-code cosine:** 0.26 (function body across 17 matched files)
 - **Average documentation cosine:** 0.17 (doc text across 17 matched files)
 - **Cheat-zeroed Files:** 0
@@ -57,11 +57,11 @@ Every matched file is listed below with function and type symbol parity.
 - **Target:** `moshi.Transformer`
 - **Similarity:** 0.30
 - **Dependents:** 0
-- **Priority Score:** 186807.0
-- **Functions:** 46/50 matched (target 46)
+- **Priority Score:** 196807.0
+- **Functions:** 46/50 matched (target 56)
 - **Missing functions:** `flash_attn`, `flash_attn`, `new`, `forward`
-- **Types:** 4/18 matched (target 17)
-- **Missing types:** `Config`, `XaGate`, `StreamingMultiheadCrossAttention`, `Rope`, `RotaryEmbedding`, `StreamingMultiheadAttention`, `Mlp`, `RmsNorm`, `LayerNorm`, `Norm`, `StreamingTransformerLayer`, `StreamingTransformer`, `ProjectedTransformer`, `Transformer`
+- **Types:** 3/18 matched (target 16)
+- **Missing types:** `Config`, `PositionalEmbedding`, `XaGate`, `StreamingMultiheadCrossAttention`, `Rope`, `RotaryEmbedding`, `StreamingMultiheadAttention`, `Mlp`, `RmsNorm`, `LayerNorm`, `Norm`, `StreamingTransformerLayer`, `StreamingTransformer`, `ProjectedTransformer`, `Transformer`
 - **Lint issues:** 1
 
 ### 4. batched_transformer
@@ -81,7 +81,7 @@ Every matched file is listed below with function and type symbol parity.
 - **Similarity:** 0.25
 - **Dependents:** 0
 - **Priority Score:** 96307.5
-- **Functions:** 47/54 matched
+- **Functions:** 47/54 matched (target 57)
 - **Missing functions:** `load`, `load_streaming`, `load_streaming_both_ways`, `load_vision`, `load_s2s`, `load_asr`, `new`
 - **Types:** 7/9 matched (target 12)
 - **Missing types:** `Config`, `StreamingTransformer`
@@ -98,18 +98,29 @@ Every matched file is listed below with function and type symbol parity.
 - **Missing types:** `Dim`
 - **Lint issues:** 1
 
-### 7. lm_generate_multistream
+### 7. tts_streaming
+
+- **Target:** `moshi.TtsStreaming`
+- **Similarity:** 0.23
+- **Dependents:** 0
+- **Priority Score:** 32407.7
+- **Functions:** 18/19 matched (target 20)
+- **Missing functions:** `v202501`
+- **Types:** 3/5 matched (target 10)
+- **Missing types:** `Config`, `State`
+
+### 8. lm_generate_multistream
 
 - **Target:** `moshi.LmGenerateMultistream`
 - **Similarity:** 0.26
 - **Dependents:** 0
 - **Priority Score:** 32007.4
-- **Functions:** 17/18 matched
+- **Functions:** 17/18 matched (target 20)
 - **Missing functions:** `step`
 - **Types:** 0/2 matched (target 3)
 - **Missing types:** `Config`, `State`
 
-### 8. conv
+### 9. conv
 
 - **Target:** `moshi.Conv`
 - **Similarity:** 0.40
@@ -122,24 +133,13 @@ Every matched file is listed below with function and type symbol parity.
 - **Tests:** 2/4 matched
 - **Lint issues:** 2
 
-### 9. tts_streaming
-
-- **Target:** `moshi.TtsStreaming`
-- **Similarity:** 0.25
-- **Dependents:** 0
-- **Priority Score:** 22407.5
-- **Functions:** 19/19 matched
-- **Missing functions:** _none_
-- **Types:** 3/5 matched (target 10)
-- **Missing types:** `Config`, `State`
-
 ### 10. lm_generate
 
 - **Target:** `moshi.LmGenerate`
 - **Similarity:** 0.16
 - **Dependents:** 0
 - **Priority Score:** 21408.4
-- **Functions:** 11/11 matched
+- **Functions:** 11/11 matched (target 13)
 - **Missing functions:** _none_
 - **Types:** 1/3 matched (target 6)
 - **Missing types:** `Config`, `State`
@@ -172,7 +172,7 @@ Every matched file is listed below with function and type symbol parity.
 - **Similarity:** 0.32
 - **Dependents:** 0
 - **Priority Score:** 11806.8
-- **Functions:** 9/9 matched
+- **Functions:** 9/9 matched (target 12)
 - **Missing functions:** _none_
 - **Types:** 8/9 matched (target 11)
 - **Missing types:** `Config`
@@ -183,9 +183,9 @@ Every matched file is listed below with function and type symbol parity.
 - **Similarity:** 0.27
 - **Dependents:** 0
 - **Priority Score:** 11707.3
-- **Functions:** 14/14 matched (target 15)
+- **Functions:** 14/14 matched (target 20)
 - **Missing functions:** _none_
-- **Types:** 2/3 matched (target 7)
+- **Types:** 2/3 matched (target 10)
 - **Missing types:** `State`
 
 ### 15. quantization

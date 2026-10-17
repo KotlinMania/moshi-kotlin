@@ -12,6 +12,31 @@ import io.github.kotlinmania.candlenn.Activation
 import io.github.kotlinmania.candlenn.VarBuilder
 import io.github.kotlinmania.candletransformers.QuantizedVarBuilder
 import io.github.kotlinmania.candletransformers.generation.LogitsProcessor
+import io.github.kotlinmania.serde.SerdeError
+import io.github.kotlinmania.serde.SerdeException
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serde.serdeCatching
+import io.github.kotlinmania.serdecore.de.Deserialize
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.I32Deserialize
+import io.github.kotlinmania.serdecore.de.MapAccess
+import io.github.kotlinmania.serdecore.de.StringDeserialize
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.de.mapDeserialize
+
+private val DEPFORMER_CONFIG_FIELDS: List<String> = listOf("transformer", "num_slices", "low_rank_embeddings")
+private val EXTRA_HEADS_CONFIG_FIELDS: List<String> = listOf("num_heads", "dim")
+private val LM_CONFIG_FIELDS: List<String> =
+    listOf(
+        "transformer",
+        "depformer",
+        "text_in_vocab_size",
+        "text_out_vocab_size",
+        "audio_vocab_size",
+        "audio_codebooks",
+        "conditioners",
+        "extra_heads",
+    )
 
 public data class LmForwardOutput(
     public val logits: Tensor,
@@ -22,12 +47,78 @@ public data class DepFormerConfig(
     public val transformer: TransformerConfig,
     public val numSlices: Int,
     public val lowRankEmbeddings: Int? = null,
-)
+) {
+    public companion object : Deserialize<DepFormerConfig> {
+        override fun <D> deserialize(deserializer: D): SerdeResult<DepFormerConfig>
+            where D : Deserializer =
+            deserializer.deserializeStruct(
+                "DepFormerConfig",
+                DEPFORMER_CONFIG_FIELDS,
+                object : Visitor<DepFormerConfig> {
+                    override fun expecting(): String = "struct DepFormerConfig"
+
+                    override fun <A> visitMap(access: A): SerdeResult<DepFormerConfig>
+                        where A : MapAccess =
+                        serdeCatching {
+                            var transformer: TransformerConfig? = null
+                            var numSlices: Int? = null
+                            var lowRankEmbeddings: Int? = null
+                            val optIntDe = I32Deserialize.asNullableDeserialize()
+                            while (true) {
+                                val key = access.nextKeySeed(SeedOf(StringDeserialize)).getOrThrow() ?: break
+                                when (key) {
+                                    "transformer" -> transformer = access.nextValueSeed(SeedOf(TransformerConfig)).getOrThrow()
+                                    "num_slices" -> numSlices = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "low_rank_embeddings" -> lowRankEmbeddings = access.nextValueSeed(SeedOf(optIntDe)).getOrThrow()
+                                    else -> throw SerdeException(SerdeError.unknownField(key, DEPFORMER_CONFIG_FIELDS))
+                                }
+                            }
+                            DepFormerConfig(
+                                transformer = transformer ?: throw SerdeException(SerdeError.missingField("transformer")),
+                                numSlices = numSlices ?: throw SerdeException(SerdeError.missingField("num_slices")),
+                                lowRankEmbeddings = lowRankEmbeddings,
+                            )
+                        }
+                },
+            )
+    }
+}
 
 public data class ExtraHeadsConfig(
     public val numHeads: Int,
     public val dim: Int,
-)
+) {
+    public companion object : Deserialize<ExtraHeadsConfig> {
+        override fun <D> deserialize(deserializer: D): SerdeResult<ExtraHeadsConfig>
+            where D : Deserializer =
+            deserializer.deserializeStruct(
+                "ExtraHeadsConfig",
+                EXTRA_HEADS_CONFIG_FIELDS,
+                object : Visitor<ExtraHeadsConfig> {
+                    override fun expecting(): String = "struct ExtraHeadsConfig"
+
+                    override fun <A> visitMap(access: A): SerdeResult<ExtraHeadsConfig>
+                        where A : MapAccess =
+                        serdeCatching {
+                            var numHeads: Int? = null
+                            var dim: Int? = null
+                            while (true) {
+                                val key = access.nextKeySeed(SeedOf(StringDeserialize)).getOrThrow() ?: break
+                                when (key) {
+                                    "num_heads" -> numHeads = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "dim" -> dim = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    else -> throw SerdeException(SerdeError.unknownField(key, EXTRA_HEADS_CONFIG_FIELDS))
+                                }
+                            }
+                            ExtraHeadsConfig(
+                                numHeads = numHeads ?: throw SerdeException(SerdeError.missingField("num_heads")),
+                                dim = dim ?: throw SerdeException(SerdeError.missingField("dim")),
+                            )
+                        }
+                },
+            )
+    }
+}
 
 public data class LmConfig(
     public val transformer: TransformerConfig,
@@ -39,7 +130,57 @@ public data class LmConfig(
     public val conditioners: kotlin.collections.Map<String, ConditionerConfig>? = null,
     public val extraHeads: ExtraHeadsConfig? = null,
 ) {
-    public companion object {
+    public companion object : Deserialize<LmConfig> {
+        override fun <D> deserialize(deserializer: D): SerdeResult<LmConfig>
+            where D : Deserializer =
+            deserializer.deserializeStruct(
+                "Config",
+                LM_CONFIG_FIELDS,
+                object : Visitor<LmConfig> {
+                    override fun expecting(): String = "struct lm::Config"
+
+                    override fun <A> visitMap(access: A): SerdeResult<LmConfig>
+                        where A : MapAccess =
+                        serdeCatching {
+                            var transformer: TransformerConfig? = null
+                            var depformer: DepFormerConfig? = null
+                            var textInVocabSize: Int? = null
+                            var textOutVocabSize: Int? = null
+                            var audioVocabSize: Int? = null
+                            var audioCodebooks: Int? = null
+                            var conditioners: kotlin.collections.Map<String, ConditionerConfig>? = null
+                            var extraHeads: ExtraHeadsConfig? = null
+                            val optDepDe = DepFormerConfig.asNullableDeserialize()
+                            val optCondDe = mapDeserialize(StringDeserialize, ConditionerConfig).asNullableDeserialize()
+                            val optExtraDe = ExtraHeadsConfig.asNullableDeserialize()
+                            while (true) {
+                                val key = access.nextKeySeed(SeedOf(StringDeserialize)).getOrThrow() ?: break
+                                when (key) {
+                                    "transformer" -> transformer = access.nextValueSeed(SeedOf(TransformerConfig)).getOrThrow()
+                                    "depformer" -> depformer = access.nextValueSeed(SeedOf(optDepDe)).getOrThrow()
+                                    "text_in_vocab_size" -> textInVocabSize = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "text_out_vocab_size" -> textOutVocabSize = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "audio_vocab_size" -> audioVocabSize = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "audio_codebooks" -> audioCodebooks = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "conditioners" -> conditioners = access.nextValueSeed(SeedOf(optCondDe)).getOrThrow()
+                                    "extra_heads" -> extraHeads = access.nextValueSeed(SeedOf(optExtraDe)).getOrThrow()
+                                    else -> throw SerdeException(SerdeError.unknownField(key, LM_CONFIG_FIELDS))
+                                }
+                            }
+                            LmConfig(
+                                transformer = transformer ?: throw SerdeException(SerdeError.missingField("transformer")),
+                                depformer = depformer,
+                                textInVocabSize = textInVocabSize ?: throw SerdeException(SerdeError.missingField("text_in_vocab_size")),
+                                textOutVocabSize = textOutVocabSize ?: throw SerdeException(SerdeError.missingField("text_out_vocab_size")),
+                                audioVocabSize = audioVocabSize ?: throw SerdeException(SerdeError.missingField("audio_vocab_size")),
+                                audioCodebooks = audioCodebooks ?: throw SerdeException(SerdeError.missingField("audio_codebooks")),
+                                conditioners = conditioners,
+                                extraHeads = extraHeads,
+                            )
+                        }
+                },
+            )
+
         public fun depformerCfg(numSlices: Int): DepFormerConfig {
             val transformerCfg =
                 TransformerConfig(

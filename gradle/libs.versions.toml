@@ -24,6 +24,8 @@ randDistr = "0.5.1"
 tracing = "0.1.0"
 anyhow = "0.1.1"
 clap = "0.1.2"
+serde = "0.1.11"
+serdeJson = "0.1.1"
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
@@ -57,12 +59,12 @@ rand-distr-kotlin = { module = "io.github.kotlinmania:rand-distr-kotlin", versio
 tracing-kotlin = { module = "io.github.kotlinmania:tracing-kotlin", version.ref = "tracing" }
 anyhow-kotlin = { module = "io.github.kotlinmania:anyhow-kotlin", version.ref = "anyhow" }
 clap-kotlin = { module = "io.github.kotlinmania:clap-kotlin", version.ref = "clap" }
+serde-kotlin = { module = "io.github.kotlinmania:serde-kotlin", version.ref = "serde" }
+serde-json-kotlin = { module = "io.github.kotlinmania:serde-json-kotlin", version.ref = "serdeJson" }
 
 [bundles]
 moshi-commonMain = [
   "kotlinx-coroutines-core",
-  "kotlinx-serialization-core",
-  "kotlinx-serialization-json",
   "kotlinx-datetime",
   "collections-immutable",
   "candle-kotlin",
@@ -78,9 +80,11 @@ moshi-commonMain = [
   "rand-kotlin",
   "rand-distr-kotlin",
   "tracing-kotlin",
+  "serde-kotlin",
 ]
 moshi-commonTest = [
   "kotlinx-coroutines-test",
   "anyhow-kotlin",
   "clap-kotlin",
+  "serde-json-kotlin",
 ]
