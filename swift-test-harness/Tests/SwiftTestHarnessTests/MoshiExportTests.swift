@@ -6,6 +6,11 @@ import Moshi
 struct MoshiExportTests {
     @Test("Swift module loads and imports cleanly")
     func swiftModuleLoads() {
-        #expect(true)
+        let mimiCfg = MimiConfig.Companion.shared.v01(numCodebooks: nil)
+        #expect(mimiCfg.sampleRate == 24000.0)
+        let lmCfg = LmConfig.Companion.shared.v01()
+        #expect(lmCfg.audioVocabSize == 2049)
+        let ttsStreamingCfg = TtsStreamingConfig.Companion.shared.v202501()
+        #expect(ttsStreamingCfg.acousticDelay == 2)
     }
 }

@@ -7,9 +7,9 @@ import kotlin.test.assertTrue
 class NormTypeTest {
     @Test
     fun testNormTypeValues() {
-        val values = NormType.values()
+        val values = NormType.entries
         assertEquals(2, values.size)
-        assertTrue(values.contains(NormType.RMS_NORM))
-        assertTrue(values.contains(NormType.LAYER_NORM))
+        assertTrue(values.contains(NormType.RmsNorm))
+        assertTrue(values.contains(NormType.LayerNorm))
     }
 }

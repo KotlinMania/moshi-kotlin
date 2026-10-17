@@ -1,7 +1,13 @@
-// port-lint: source moshi-core/src/lib.rs
 package io.github.kotlinmania.moshi
 
-enum class NormType {
-    RMS_NORM,
-    LAYER_NORM,
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+@Serializable
+public enum class NormType {
+    @SerialName("RmsNorm")
+    RmsNorm,
+
+    @SerialName("LayerNorm")
+    LayerNorm,
 }
