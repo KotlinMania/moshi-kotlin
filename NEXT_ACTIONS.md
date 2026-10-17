@@ -4,14 +4,16 @@ Based on AST analysis, here are the concrete next steps.
 
 ## Summary
 
-- **Files Present:** 10/18 (55.6%)
-- **Function parity:** 13/296 matched (target 26) — 4.4%
-- **Class/type parity:** 12/100 matched (target 33) — 12.0%
-- **Combined symbol parity:** 25/396 matched (target 59) — 6.3%
-- **Average inline-code cosine:** 0.11 (function body across 9 matched files)
-- **Average documentation cosine:** 0.00 (doc text across 9 matched files)
-- **Cheat-zeroed Files:** 6
-- **Critical Issues:** 10 files with <0.60 function similarity
+- **Files Present:** 17/18 (94.4%)
+- **Function parity:** 336/368 matched (target 383) — 91.3%
+- **Class/type parity:** 62/100 matched (target 125) — 62.0%
+- **Combined symbol parity:** 398/468 matched (target 508) — 85.0%
+- **Average inline-code cosine:** 0.26 (function body across 17 matched files)
+- **Average documentation cosine:** 0.17 (doc text across 17 matched files)
+- **Cheat-zeroed Files:** 0
+- **Critical Issues:** 17 files with <0.60 function similarity
+- **Needs Review:** 0 files with 0.60-0.84 function similarity
+- **Excellent:** 0 files with >=0.85 function similarity
 
 ## Priority 1: Fix Incomplete High-Dependency Files
 
@@ -29,144 +31,195 @@ Every matched file is listed below with function and type symbol parity.
 
 ### 1. mimi
 
-- **Target:** `moshi.Mimi [ZERO] [PROVENANCE-FALLBACK]`
-- **Similarity:** 0.00
+- **Target:** `moshi.Mimi`
+- **Similarity:** 0.28
 - **Dependents:** 1
-- **Priority Score:** 1151610.0
-- **Functions:** 0/13 matched (target 0)
-- **Missing functions:** `v0_1`, `new`, `batched`, `config`, `encode_pre_quantize`, `encode`, `encode_step`, `decode`, `decode_step`, `reset_state`, `reset_batch_idx`, `load`, `load_b`
-- **Types:** 1/3 matched (target 1)
-- **Missing types:** `Config`, `Mimi`
-- **Provenance warning:** port-lint provenance header matched only after fallback normalization: `moshi-core/src/mimi.rs` vs expected `mimi.rs`
-- **Proposed provenance header:** `// port-lint: source mimi.rs` (current: `// port-lint: source moshi-core/src/mimi.rs`)
-- **Lint issues:** 1
+- **Priority Score:** 1041707.2
+- **Functions:** 11/14 matched
+- **Missing functions:** `new_`, `load`, `load_b`
+- **Types:** 2/3 matched
+- **Missing types:** `Config`
 
-### 2. lm
+### 2. kv_cache
 
-- **Target:** `moshi.Lm [ZERO] [PROVENANCE-FALLBACK]`
-- **Similarity:** 0.00
-- **Dependents:** 0
-- **Priority Score:** 505210.0
-- **Functions:** 0/43 matched (target 0)
-- **Missing functions:** `depformer_cfg`, `v0_1`, `v0_1_vision`, `v0_1_vision_streaming`, `v0_1_streaming`, `v0_1_asr`, `tts_v0_1`, `s2s_v0_1`, `s2s_v0_1_streaming`, `asr_v0_1_1b`, `asr_300m_202501`, `tts_202501`, `s2s_2b_16rvq_202501`, `new`, `forward`, `sample`, `sample_cfg`, `reset_state`, `step`, `reset_batch_idx`, `maybe_precompute_ca_kv`, `forward_ca`, `batched`, `condition_provider`, `in_audio_codebooks`, `audio_pad_token`, `text_start_token`, `generated_audio_codebooks`, `is_quantized`, `device`, `dtype`, `extra_heads`, `forward_cond`, `depformer_sample`, `depformer_sample_cfg`, `load_lm_model`, `load`, `load_streaming`, `load_streaming_both_ways`, `load_vision`, `load_s2s`, `load_asr`, `forced_tokens`
-- **Types:** 2/9 matched (target 8)
-- **Missing types:** `Config`, `LowRankEmbeddings`, `DepFormerSlice`, `DepFormer`, `StreamingTransformer`, `LmModel`, `ForcedAudioTokens`
-- **Provenance warning:** port-lint provenance header matched only after fallback normalization: `moshi-core/src/lm.rs` vs expected `lm.rs`
-- **Proposed provenance header:** `// port-lint: source lm.rs` (current: `// port-lint: source moshi-core/src/lm.rs`)
-- **Lint issues:** 1
+- **Target:** `moshi.KvCache`
+- **Similarity:** 0.23
+- **Dependents:** 1
+- **Priority Score:** 1002407.7
+- **Functions:** 20/20 matched (target 23)
+- **Missing functions:** _none_
+- **Types:** 4/4 matched (target 6)
+- **Missing types:** _none_
+- **Tests:** 1/1 matched
 
 ### 3. transformer
 
-- **Target:** `moshi.Transformer [ZERO] [PROVENANCE-FALLBACK]`
-- **Similarity:** 0.00
+- **Target:** `moshi.Transformer`
+- **Similarity:** 0.30
 - **Dependents:** 0
-- **Priority Score:** 333510.0
-- **Functions:** 0/17 matched (target 0)
-- **Missing functions:** `new`, `forward`, `is_quantized`, `compute_kv`, `apply_rotary_emb`, `rope`, `flash_attn`, `reset_kv_cache`, `set_kv_cache`, `new_shortcut`, `current_seq_len`, `forward_ca`, `maybe_precompute_ca_kv`, `copy_state`, `reset_batch_idx`, `reset_state`, `step`
-- **Types:** 2/18 matched (target 4)
-- **Missing types:** `Config`, `CaSrc`, `LayerScale`, `XaGate`, `StreamingMultiheadCrossAttention`, `Rope`, `RotaryEmbedding`, `StreamingMultiheadAttention`, `Mlp`, `RmsNorm`, `LayerNorm`, `Norm`, `StreamingTransformerLayer`, `StreamingTransformer`, `ProjectedTransformer`, `Transformer`
-- **Provenance warning:** port-lint provenance header matched only after fallback normalization: `moshi-core/src/transformer.rs` vs expected `transformer.rs`
-- **Proposed provenance header:** `// port-lint: source transformer.rs` (current: `// port-lint: source moshi-core/src/transformer.rs`)
+- **Priority Score:** 186807.0
+- **Functions:** 46/50 matched (target 46)
+- **Missing functions:** `flash_attn`, `flash_attn`, `new`, `forward`
+- **Types:** 4/18 matched (target 17)
+- **Missing types:** `Config`, `XaGate`, `StreamingMultiheadCrossAttention`, `Rope`, `RotaryEmbedding`, `StreamingMultiheadAttention`, `Mlp`, `RmsNorm`, `LayerNorm`, `Norm`, `StreamingTransformerLayer`, `StreamingTransformer`, `ProjectedTransformer`, `Transformer`
 - **Lint issues:** 1
 
-### 4. tts_streaming
+### 4. batched_transformer
 
-- **Target:** `moshi.TtsStreaming [PROVENANCE-FALLBACK]`
-- **Similarity:** 0.04
+- **Target:** `moshi.BatchedTransformer`
+- **Similarity:** 0.23
 - **Dependents:** 0
-- **Priority Score:** 202209.6
-- **Functions:** 1/17 matched (target 1)
-- **Missing functions:** `new`, `step_idx`, `audio_pad_token`, `config`, `step`, `overwrite_last_text_token`, `audio_tokens`, `text_tokens`, `last_audio_tokens`, `audio_codebooks`, `device`, `dtype`, `tokenize_prompt`, `sample_rate`, `encode`, `empty`
-- **Types:** 1/5 matched (target 2)
-- **Missing types:** `Config`, `State`, `Speaker`, `SpeakerEncoder`
-- **Provenance warning:** port-lint provenance header matched only after fallback normalization: `moshi-core/src/tts_streaming.rs` vs expected `tts_streaming.rs`
-- **Proposed provenance header:** `// port-lint: source tts_streaming.rs` (current: `// port-lint: source moshi-core/src/tts_streaming.rs`)
-- **Lint issues:** 1
+- **Priority Score:** 173907.7
+- **Functions:** 22/31 matched (target 22)
+- **Missing functions:** `new`, `new_shortcut`, `forward`, `new`, `forward`, `new`, `forward`, `new`, `forward`
+- **Types:** 0/8 matched (target 4)
+- **Missing types:** `StreamingMultiheadAttention`, `Mlp`, `RmsNorm`, `LayerNorm`, `Norm`, `StreamingTransformerLayer`, `StreamingTransformer`, `ProjectedTransformer`
 
-### 5. conv
+### 5. lm
 
-- **Target:** `moshi.Conv [ZERO] [PROVENANCE-FALLBACK]`
-- **Similarity:** 0.00
+- **Target:** `moshi.Lm`
+- **Similarity:** 0.25
 - **Dependents:** 0
-- **Priority Score:** 192110.0
-- **Functions:** 0/13 matched (target 0)
-- **Missing functions:** `conv1d_weight_norm`, `new`, `forward`, `get_extra_padding_for_conv1d`, `pad1d`, `unpad1d`, `reset_batch_idx`, `reset_state`, `step`, `run_conv1d`, `run_conv_tr1d`, `conv1d`, `conv_tr1d`
-- **Types:** 2/8 matched (target 2)
-- **Missing types:** `NormConv1d`, `NormConvTranspose1d`, `StreamableConv1d`, `StreamableConvTranspose1d`, `ConvDownsample1d`, `ConvTrUpsample1d`
-- **Tests:** 0/4 matched
-- **Provenance warning:** port-lint provenance header matched only after fallback normalization: `moshi-core/src/conv.rs` vs expected `conv.rs`
-- **Proposed provenance header:** `// port-lint: source conv.rs` (current: `// port-lint: source moshi-core/src/conv.rs`)
-- **Lint issues:** 1
+- **Priority Score:** 96307.5
+- **Functions:** 47/54 matched
+- **Missing functions:** `load`, `load_streaming`, `load_streaming_both_ways`, `load_vision`, `load_s2s`, `load_asr`, `new`
+- **Types:** 7/9 matched (target 12)
+- **Missing types:** `Config`, `StreamingTransformer`
 
-### 6. asr
+### 6. streaming
 
-- **Target:** `moshi.Asr [ZERO] [PROVENANCE-FALLBACK]`
-- **Similarity:** 0.00
+- **Target:** `moshi.Streaming`
+- **Similarity:** 0.14
 - **Dependents:** 0
-- **Priority Score:** 151610.0
-- **Functions:** 0/13 matched (target 0)
-- **Missing functions:** `reset`, `text_token`, `is_first_step`, `next_token`, `new`, `model_step_idx`, `device`, `batch_size`, `asr_delay_in_tokens`, `step_pcm`, `text_tokens`, `step_tokens`, `reset_batch_idx`
-- **Types:** 1/3 matched (target 4)
-- **Missing types:** `ItemState`, `State`
-- **Provenance warning:** port-lint provenance header matched only after fallback normalization: `moshi-core/src/asr.rs` vs expected `asr.rs`
-- **Proposed provenance header:** `// port-lint: source asr.rs` (current: `// port-lint: source moshi-core/src/asr.rs`)
+- **Priority Score:** 73908.6
+- **Functions:** 25/31 matched (target 33)
+- **Missing functions:** `fmt`, `from`, `fmt`, `from`, `from`, `from`
+- **Types:** 7/8 matched
+- **Missing types:** `Dim`
 - **Lint issues:** 1
 
 ### 7. lm_generate_multistream
 
-- **Target:** `moshi.LmGenerateMultistream [PROVENANCE-FALLBACK]`
-- **Similarity:** 0.22
+- **Target:** `moshi.LmGenerateMultistream`
+- **Similarity:** 0.26
 - **Dependents:** 0
-- **Priority Score:** 131807.8
-- **Functions:** 5/16 matched (target 5)
-- **Missing functions:** `new`, `step_idx`, `config`, `user_rating`, `set_user_rating`, `apply_repetition_penalty`, `step_`, `step_without_ca_src`, `audio_tokens`, `text_tokens`, `last_audio_tokens`
-- **Types:** 0/2 matched (target 1)
+- **Priority Score:** 32007.4
+- **Functions:** 17/18 matched
+- **Missing functions:** `step`
+- **Types:** 0/2 matched (target 3)
 - **Missing types:** `Config`, `State`
-- **Provenance warning:** port-lint provenance header matched only after fallback normalization: `moshi-core/src/lm_generate_multistream.rs` vs expected `lm_generate_multistream.rs`
-- **Proposed provenance header:** `// port-lint: source lm_generate_multistream.rs` (current: `// port-lint: source moshi-core/src/lm_generate_multistream.rs`)
-- **Lint issues:** 1
 
-### 8. lm_generate
+### 8. conv
 
-- **Target:** `moshi.LmGenerate [PROVENANCE-FALLBACK]`
+- **Target:** `moshi.Conv`
+- **Similarity:** 0.40
+- **Dependents:** 0
+- **Priority Score:** 24006.0
+- **Functions:** 30/32 matched
+- **Missing functions:** `run_conv1d`, `run_conv_tr1d`
+- **Types:** 8/8 matched (target 9)
+- **Missing types:** _none_
+- **Tests:** 2/4 matched
+- **Lint issues:** 2
+
+### 9. tts_streaming
+
+- **Target:** `moshi.TtsStreaming`
+- **Similarity:** 0.25
+- **Dependents:** 0
+- **Priority Score:** 22407.5
+- **Functions:** 19/19 matched
+- **Missing functions:** _none_
+- **Types:** 3/5 matched (target 10)
+- **Missing types:** `Config`, `State`
+
+### 10. lm_generate
+
+- **Target:** `moshi.LmGenerate`
+- **Similarity:** 0.16
+- **Dependents:** 0
+- **Priority Score:** 21408.4
+- **Functions:** 11/11 matched
+- **Missing functions:** _none_
+- **Types:** 1/3 matched (target 6)
+- **Missing types:** `Config`, `State`
+
+### 11. tts
+
+- **Target:** `moshi.Tts`
+- **Similarity:** 0.36
+- **Dependents:** 0
+- **Priority Score:** 20906.4
+- **Functions:** 7/7 matched
+- **Missing functions:** _none_
+- **Types:** 0/2 matched (target 3)
+- **Missing types:** `Config`, `Model`
+
+### 12. seanet
+
+- **Target:** `moshi.Seanet`
+- **Similarity:** 0.30
+- **Dependents:** 0
+- **Priority Score:** 12107.0
+- **Functions:** 15/15 matched
+- **Missing functions:** _none_
+- **Types:** 5/6 matched (target 7)
+- **Missing types:** `Config`
+
+### 13. conditioner
+
+- **Target:** `moshi.Conditioner`
+- **Similarity:** 0.32
+- **Dependents:** 0
+- **Priority Score:** 11806.8
+- **Functions:** 9/9 matched
+- **Missing functions:** _none_
+- **Types:** 8/9 matched (target 11)
+- **Missing types:** `Config`
+
+### 14. asr
+
+- **Target:** `moshi.Asr`
+- **Similarity:** 0.27
+- **Dependents:** 0
+- **Priority Score:** 11707.3
+- **Functions:** 14/14 matched (target 15)
+- **Missing functions:** _none_
+- **Types:** 2/3 matched (target 7)
+- **Missing types:** `State`
+
+### 15. quantization
+
+- **Target:** `moshi.Quantization`
+- **Similarity:** 0.26
+- **Dependents:** 0
+- **Priority Score:** 2507.4
+- **Functions:** 19/19 matched
+- **Missing functions:** _none_
+- **Types:** 6/6 matched
+- **Missing types:** _none_
+
+### 16. nn
+
+- **Target:** `moshi.Nn`
+- **Similarity:** 0.30
+- **Dependents:** 0
+- **Priority Score:** 2207.0
+- **Functions:** 18/18 matched (target 22)
+- **Missing functions:** _none_
+- **Types:** 4/4 matched (target 6)
+- **Missing types:** _none_
+
+### 17. wav
+
+- **Target:** `moshi.Wav`
 - **Similarity:** 0.18
 - **Dependents:** 0
-- **Priority Score:** 91308.2
-- **Functions:** 3/10 matched (target 3)
-- **Missing functions:** `new`, `step_idx`, `config`, `set_audio_tokens`, `step`, `last_text_token`, `last_audio_tokens`
-- **Types:** 1/3 matched (target 5)
-- **Missing types:** `Config`, `State`
-- **Provenance warning:** port-lint provenance header matched only after fallback normalization: `moshi-core/src/lm_generate.rs` vs expected `lm_generate.rs`
-- **Proposed provenance header:** `// port-lint: source lm_generate.rs` (current: `// port-lint: source moshi-core/src/lm_generate.rs`)
-- **Lint issues:** 1
-
-### 9. wav
-
-- **Target:** `moshi.Wav [PROVENANCE-FALLBACK]`
-- **Similarity:** 0.53
-- **Dependents:** 0
-- **Priority Score:** 504.7
-- **Functions:** 4/4 matched (target 17)
+- **Priority Score:** 708.2
+- **Functions:** 6/6 matched (target 24)
 - **Missing functions:** _none_
-- **Types:** 1/1 matched (target 5)
+- **Types:** 1/1 matched (target 7)
 - **Missing types:** _none_
-- **Provenance warning:** port-lint provenance header matched only after fallback normalization: `moshi-core/src/wav.rs` vs expected `wav.rs`
-- **Proposed provenance header:** `// port-lint: source wav.rs` (current: `// port-lint: source moshi-core/src/wav.rs`)
-- **Lint issues:** 1
-
-### 10. lib
-
-- **Target:** `moshi.NormType [STUB] [PROVENANCE-FALLBACK]`
-- **Similarity:** 0.00
-- **Dependents:** 0
-- **Priority Score:** 110.0
-- **Functions:** 0/0 matched
-- **Missing functions:** _none_
-- **Types:** 1/1 matched
-- **Missing types:** _none_
-- **Provenance warning:** port-lint provenance header matched only after fallback normalization: `moshi-core/src/lib.rs` vs expected `lib.rs`
-- **Proposed provenance header:** `// port-lint: source lib.rs` (current: `// port-lint: source moshi-core/src/lib.rs`)
-- **Lint issues:** 1
 
 ## Success Criteria
 

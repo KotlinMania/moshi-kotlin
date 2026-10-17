@@ -1,3 +1,4 @@
+// port-lint: tests wav.rs
 package io.github.kotlinmania.moshi
 
 import kotlin.test.Test
@@ -99,11 +100,11 @@ class WavTest {
         val sink = TestByteArraySink()
         val samples =
             listOf(
-                FloatSample(0.1f),
-                DoubleSample(-0.2),
-                ShortSample(500),
+                FloatSample(0f),
+                DoubleSample(0.5),
+                ShortSample(-1000),
             )
-        val sampleRate = 44100
+        val sampleRate = 48000
 
         writePcmAsWav(sink, samples, sampleRate)
         val bytes = sink.toByteArray()
