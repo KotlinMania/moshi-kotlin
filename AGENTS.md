@@ -146,11 +146,12 @@ as the default next action when infra is clean.
   explicitly).
 - **All current KotlinMania targets build** (§0 condition 3 + §5
   `fullTargetBuildTaskNames`). Never shrink the gate to dodge a CI
-  failure. The exceptions are the documented retired targets:
-  `watchosArm32` (§5.5.1, retired 2026-05-24 — Apple Watch armv7k EOL +
-  Mach-O 24-bit scattered relocation limit) and the JetBrains-deprecated
-  x86_64 simulator targets `tvosX64` / `watchosX64` / `macosX64`
-  (§5.5.2). These are workspace-wide retirements, not per-repo shrinks.
+  failure. Sydney's current workspace policy retires all native 32-bit
+  targets (`watchosArm32`, `watchosArm64` / arm64_32, `androidNativeArm32`,
+  `androidNativeX86`, `linuxArm32Hfp`, `mingwX86`) and Apple-specific x64
+  targets (`iosX64`, `macosX64`, `tvosX64`, `watchosX64`). Retain Linux/Windows
+  x64, Android native ARM64/x64, Apple ARM64/simulator ARM64, JVM, JS and Wasm.
+  These are workspace-wide retirements, not per-repo gate reductions.
 - **Swift test passes locally** (§0 condition 4). Don't wait for GitHub
   to find Swift Export bugs — by then you've burned a CI run.
 - **Test parity with `tmp/` Rust** (§6). Every upstream `#[test]` /
