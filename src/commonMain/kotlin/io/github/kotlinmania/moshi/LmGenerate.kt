@@ -6,8 +6,22 @@ import io.github.kotlinmania.candle.Tensor
 import io.github.kotlinmania.candle.bail
 import io.github.kotlinmania.candle.i
 import io.github.kotlinmania.candletransformers.generation.LogitsProcessor
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import io.github.kotlinmania.serde.SerdeError
+import io.github.kotlinmania.serde.SerdeException
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serde.serdeCatching
+import io.github.kotlinmania.serdecore.de.Deserialize
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.I32Deserialize
+import io.github.kotlinmania.serdecore.de.MapAccess
+import io.github.kotlinmania.serdecore.de.StringDeserialize
+import io.github.kotlinmania.serdecore.de.U32Deserialize
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serialize
+import io.github.kotlinmania.serdecore.ser.Serializer
+
+private val LM_GENERATE_CONFIG_FIELDS: List<String> =
+    listOf("audio_delays", "audio_vocab_size", "text_pad_token", "text_eop_token", "text_start_token")
 
 public sealed class Token {
     public data class Set(
@@ -19,24 +33,70 @@ public sealed class Token {
     public data object LiteralZero : Token()
 }
 
-@Serializable
 public data class LmGenerateConfig(
-    @SerialName("audio_delays")
     public val audioDelays: List<Int>,
-    @SerialName("audio_vocab_size")
     public val audioVocabSize: Int,
-    @SerialName("text_pad_token")
     public val textPadToken: UInt,
-    @SerialName("text_eop_token")
     public val textEopToken: UInt,
-    @SerialName("text_start_token")
     public val textStartToken: UInt,
-) {
+) : Serialize {
     public fun audioPadToken(): UInt = (audioVocabSize - 1).toUInt()
 
     public fun audioCodebooks(): Int = audioDelays.size
 
     public fun maxAudioDelay(): Int = audioDelays.maxOrNull() ?: 0
+
+    override fun <Ok> serialize(serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serdeCatching {
+            val state = serializer.serializeStruct("Config", 5).getOrThrow()
+            state.serializeField("audio_delays", audioDelays.asListSerialize { it.asSerialize() }).getOrThrow()
+            state.serializeField("audio_vocab_size", audioVocabSize.asSerialize()).getOrThrow()
+            state.serializeField("text_pad_token", textPadToken.asSerialize()).getOrThrow()
+            state.serializeField("text_eop_token", textEopToken.asSerialize()).getOrThrow()
+            state.serializeField("text_start_token", textStartToken.asSerialize()).getOrThrow()
+            state.end().getOrThrow()
+        }
+
+    public companion object : Deserialize<LmGenerateConfig> {
+        override fun <D> deserialize(deserializer: D): SerdeResult<LmGenerateConfig>
+            where D : Deserializer =
+            deserializer.deserializeStruct(
+                "Config",
+                LM_GENERATE_CONFIG_FIELDS,
+                object : Visitor<LmGenerateConfig> {
+                    override fun expecting(): String = "struct lm_generate::Config"
+
+                    override fun <A> visitMap(access: A): SerdeResult<LmGenerateConfig>
+                        where A : MapAccess =
+                        serdeCatching {
+                            var audioDelays: List<Int>? = null
+                            var audioVocabSize: Int? = null
+                            var textPadToken: UInt? = null
+                            var textEopToken: UInt? = null
+                            var textStartToken: UInt? = null
+                            val i32ListDe = I32Deserialize.asListDeserialize()
+                            while (true) {
+                                val key = access.nextKeySeed(SeedOf(StringDeserialize)).getOrThrow() ?: break
+                                when (key) {
+                                    "audio_delays" -> audioDelays = access.nextValueSeed(SeedOf(i32ListDe)).getOrThrow()
+                                    "audio_vocab_size" -> audioVocabSize = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "text_pad_token" -> textPadToken = access.nextValueSeed(SeedOf(U32Deserialize)).getOrThrow()
+                                    "text_eop_token" -> textEopToken = access.nextValueSeed(SeedOf(U32Deserialize)).getOrThrow()
+                                    "text_start_token" -> textStartToken = access.nextValueSeed(SeedOf(U32Deserialize)).getOrThrow()
+                                    else -> throw SerdeException(SerdeError.unknownField(key, LM_GENERATE_CONFIG_FIELDS))
+                                }
+                            }
+                            LmGenerateConfig(
+                                audioDelays = audioDelays ?: throw SerdeException(SerdeError.missingField("audio_delays")),
+                                audioVocabSize = audioVocabSize ?: throw SerdeException(SerdeError.missingField("audio_vocab_size")),
+                                textPadToken = textPadToken ?: throw SerdeException(SerdeError.missingField("text_pad_token")),
+                                textEopToken = textEopToken ?: throw SerdeException(SerdeError.missingField("text_eop_token")),
+                                textStartToken = textStartToken ?: throw SerdeException(SerdeError.missingField("text_start_token")),
+                            )
+                        }
+                },
+            )
+    }
 }
 
 public class LmGenerateState private constructor(

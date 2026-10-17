@@ -8,41 +8,171 @@ import io.github.kotlinmania.candle.Shape
 import io.github.kotlinmania.candle.Tensor
 import io.github.kotlinmania.candle.bail
 import io.github.kotlinmania.candle.cat
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import io.github.kotlinmania.serde.SerdeError
+import io.github.kotlinmania.serde.SerdeException
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serde.serdeCatching
+import io.github.kotlinmania.serdecore.de.Deserialize
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.F32Deserialize
+import io.github.kotlinmania.serdecore.de.I32Deserialize
+import io.github.kotlinmania.serdecore.de.MapAccess
+import io.github.kotlinmania.serdecore.de.StringDeserialize
+import io.github.kotlinmania.serdecore.de.Visitor
 import kotlin.math.pow
 
-@Serializable
+private val LUT_CONFIG_FIELDS: List<String> = listOf("n_bins", "dim", "possible_values")
+private val CONTINUOUS_ATTR_FIELDS: List<String> = listOf("dim", "scale_factor", "max_period")
+private val CONDITIONER_VARIANTS: List<String> = listOf("Lut", "ContinuousAttribute")
+
 public data class LutConfig(
-    @SerialName("n_bins")
     public val nBins: Int,
     public val dim: Int,
-    @SerialName("possible_values")
     public val possibleValues: List<String>,
-)
+) {
+    public companion object : Deserialize<LutConfig> {
+        override fun <D> deserialize(deserializer: D): SerdeResult<LutConfig>
+            where D : Deserializer =
+            deserializer.deserializeStruct(
+                "LutConfig",
+                LUT_CONFIG_FIELDS,
+                object : Visitor<LutConfig> {
+                    override fun expecting(): String = "struct LutConfig"
 
-@Serializable
+                    override fun <A> visitMap(access: A): SerdeResult<LutConfig>
+                        where A : MapAccess =
+                        serdeCatching {
+                            var nBins: Int? = null
+                            var dim: Int? = null
+                            var possibleValues: List<String>? = null
+                            val strListDe = StringDeserialize.asListDeserialize()
+                            while (true) {
+                                val key = access.nextKeySeed(SeedOf(StringDeserialize)).getOrThrow() ?: break
+                                when (key) {
+                                    "n_bins" -> nBins = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "dim" -> dim = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "possible_values" -> possibleValues = access.nextValueSeed(SeedOf(strListDe)).getOrThrow()
+                                    else -> throw SerdeException(SerdeError.unknownField(key, LUT_CONFIG_FIELDS))
+                                }
+                            }
+                            LutConfig(
+                                nBins = nBins ?: throw SerdeException(SerdeError.missingField("n_bins")),
+                                dim = dim ?: throw SerdeException(SerdeError.missingField("dim")),
+                                possibleValues = possibleValues ?: throw SerdeException(SerdeError.missingField("possible_values")),
+                            )
+                        }
+                },
+            )
+    }
+}
+
 public data class ContinuousAttributeConfig(
     public val dim: Int,
-    @SerialName("scale_factor")
     public val scaleFactor: Float,
-    @SerialName("max_period")
     public val maxPeriod: Float,
-)
+) {
+    public companion object : Deserialize<ContinuousAttributeConfig> {
+        override fun <D> deserialize(deserializer: D): SerdeResult<ContinuousAttributeConfig>
+            where D : Deserializer =
+            deserializer.deserializeStruct(
+                "ContinuousAttributeConfig",
+                CONTINUOUS_ATTR_FIELDS,
+                object : Visitor<ContinuousAttributeConfig> {
+                    override fun expecting(): String = "struct ContinuousAttributeConfig"
 
-@Serializable
+                    override fun <A> visitMap(access: A): SerdeResult<ContinuousAttributeConfig>
+                        where A : MapAccess =
+                        serdeCatching {
+                            var dim: Int? = null
+                            var scaleFactor: Float? = null
+                            var maxPeriod: Float? = null
+                            while (true) {
+                                val key = access.nextKeySeed(SeedOf(StringDeserialize)).getOrThrow() ?: break
+                                when (key) {
+                                    "dim" -> dim = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "scale_factor" -> scaleFactor = access.nextValueSeed(SeedOf(F32Deserialize)).getOrThrow()
+                                    "max_period" -> maxPeriod = access.nextValueSeed(SeedOf(F32Deserialize)).getOrThrow()
+                                    else -> throw SerdeException(SerdeError.unknownField(key, CONTINUOUS_ATTR_FIELDS))
+                                }
+                            }
+                            ContinuousAttributeConfig(
+                                dim = dim ?: throw SerdeException(SerdeError.missingField("dim")),
+                                scaleFactor = scaleFactor ?: throw SerdeException(SerdeError.missingField("scale_factor")),
+                                maxPeriod = maxPeriod ?: throw SerdeException(SerdeError.missingField("max_period")),
+                            )
+                        }
+                },
+            )
+    }
+}
+
 public sealed class ConditionerConfig {
-    @Serializable
-    @SerialName("Lut")
     public data class Lut(
         public val config: LutConfig,
     ) : ConditionerConfig()
 
-    @Serializable
-    @SerialName("ContinuousAttribute")
     public data class ContinuousAttribute(
         public val config: ContinuousAttributeConfig,
     ) : ConditionerConfig()
+
+    public companion object : Deserialize<ConditionerConfig> {
+        override fun <D> deserialize(deserializer: D): SerdeResult<ConditionerConfig>
+            where D : Deserializer =
+            deserializer.deserializeMap(
+                object : Visitor<ConditionerConfig> {
+                    override fun expecting(): String = "internally tagged enum ConditionerConfig"
+
+                    override fun <A> visitMap(access: A): SerdeResult<ConditionerConfig>
+                        where A : MapAccess =
+                        serdeCatching {
+                            var typeTag: String? = null
+                            var nBins: Int? = null
+                            var dim: Int? = null
+                            var possibleValues: List<String>? = null
+                            var scaleFactor: Float? = null
+                            var maxPeriod: Float? = null
+                            val strListDe = StringDeserialize.asListDeserialize()
+                            while (true) {
+                                val key = access.nextKeySeed(SeedOf(StringDeserialize)).getOrThrow() ?: break
+                                when (key) {
+                                    "type" -> typeTag = access.nextValueSeed(SeedOf(StringDeserialize)).getOrThrow()
+                                    "n_bins" -> nBins = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "dim" -> dim = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "possible_values" -> possibleValues = access.nextValueSeed(SeedOf(strListDe)).getOrThrow()
+                                    "scale_factor" -> scaleFactor = access.nextValueSeed(SeedOf(F32Deserialize)).getOrThrow()
+                                    "max_period" -> maxPeriod = access.nextValueSeed(SeedOf(F32Deserialize)).getOrThrow()
+                                    else -> throw SerdeException(SerdeError.custom("unknown field `$key` in ConditionerConfig"))
+                                }
+                            }
+                            when (val tag = typeTag ?: throw SerdeException(SerdeError.missingField("type"))) {
+                                "Lut" -> {
+                                    Lut(
+                                        LutConfig(
+                                            nBins = nBins ?: throw SerdeException(SerdeError.missingField("n_bins")),
+                                            dim = dim ?: throw SerdeException(SerdeError.missingField("dim")),
+                                            possibleValues = possibleValues ?: throw SerdeException(SerdeError.missingField("possible_values")),
+                                        ),
+                                    )
+                                }
+
+                                "ContinuousAttribute" -> {
+                                    ContinuousAttribute(
+                                        ContinuousAttributeConfig(
+                                            dim = dim ?: throw SerdeException(SerdeError.missingField("dim")),
+                                            scaleFactor = scaleFactor ?: throw SerdeException(SerdeError.missingField("scale_factor")),
+                                            maxPeriod = maxPeriod ?: throw SerdeException(SerdeError.missingField("max_period")),
+                                        ),
+                                    )
+                                }
+
+                                else -> {
+                                    throw SerdeException(SerdeError.unknownVariant(tag, CONDITIONER_VARIANTS))
+                                }
+                            }
+                        }
+                },
+            )
+    }
 }
 
 public class LutConditioner(

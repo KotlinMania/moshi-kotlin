@@ -19,18 +19,118 @@ import io.github.kotlinmania.candlenn.rmsNorm
 import io.github.kotlinmania.candlenn.ropeI
 import io.github.kotlinmania.candlenn.sigmoid
 import io.github.kotlinmania.candlenn.softmaxLastDim
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import io.github.kotlinmania.serde.SerdeError
+import io.github.kotlinmania.serde.SerdeException
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serde.serdeCatching
+import io.github.kotlinmania.serdecore.de.BooleanDeserialize
+import io.github.kotlinmania.serdecore.de.Deserialize
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.EnumAccess
+import io.github.kotlinmania.serdecore.de.F64Deserialize
+import io.github.kotlinmania.serdecore.de.I32Deserialize
+import io.github.kotlinmania.serdecore.de.MapAccess
+import io.github.kotlinmania.serdecore.de.SeqAccess
+import io.github.kotlinmania.serdecore.de.StringDeserialize
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serialize
+import io.github.kotlinmania.serdecore.ser.Serializer
 import kotlin.math.floor
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.sqrt
 
+private val CROSS_ATTENTION_CONFIG_FIELDS: List<String> = listOf("gating", "norm", "kv_in_dim")
+private val TRANSFORMER_CONFIG_FIELDS: List<String> =
+    listOf(
+        "d_model",
+        "num_heads",
+        "num_layers",
+        "causal",
+        "norm_first",
+        "bias_ff",
+        "bias_attn",
+        "layer_scale",
+        "positional_embedding",
+        "use_conv_block",
+        "cross_attention",
+        "conv_kernel_size",
+        "use_conv_bias",
+        "gating",
+        "norm",
+        "context",
+        "max_period",
+        "max_seq_len",
+        "kv_repeat",
+        "dim_feedforward",
+        "conv_layout",
+        "shared_cross_attn",
+    )
+private val POSITIONAL_EMBEDDING_VARIANTS: List<String> = listOf("Rope", "Sin", "None")
+private val CROSS_ATTENTION_GATING_VARIANTS: List<String> =
+    listOf(
+        "Normal",
+        "ConstantGatedTanh",
+        "ConstantGatedSigmoid",
+        "ConditionalGatedTanh",
+        "ConditionalGatedSigmoid",
+        "ConditionalGatedSigmoidLearnableBias",
+        "ConditionalGatedTanhLearnableBias",
+    )
+
 public data class CrossAttentionConfig(
     public val gating: CrossAttentionGating,
     public val norm: NormType,
     public val kvInDim: Int? = null,
-)
+) {
+    public companion object : Deserialize<CrossAttentionConfig> {
+        override fun <D> deserialize(deserializer: D): SerdeResult<CrossAttentionConfig>
+            where D : Deserializer =
+            deserializer.deserializeTuple(
+                3,
+                object : Visitor<CrossAttentionConfig> {
+                    override fun expecting(): String = "tuple (CrossAttentionGating, NormType, Option<usize>)"
+
+                    override fun <A> visitSeq(access: A): SerdeResult<CrossAttentionConfig>
+                        where A : SeqAccess =
+                        serdeCatching {
+                            val optIntDe = I32Deserialize.asNullableDeserialize()
+                            val gating =
+                                access.nextElementSeed(SeedOf(CrossAttentionGating)).getOrThrow()
+                                    ?: throw SerdeException(SerdeError.invalidLength(0, this))
+                            val norm =
+                                access.nextElementSeed(SeedOf(NormType)).getOrThrow()
+                                    ?: throw SerdeException(SerdeError.invalidLength(1, this))
+                            val kvInDim = access.nextElementSeed(SeedOf(optIntDe)).getOrThrow()
+                            CrossAttentionConfig(gating = gating, norm = norm, kvInDim = kvInDim)
+                        }
+
+                    override fun <A> visitMap(access: A): SerdeResult<CrossAttentionConfig>
+                        where A : MapAccess =
+                        serdeCatching {
+                            var gating: CrossAttentionGating? = null
+                            var norm: NormType? = null
+                            var kvInDim: Int? = null
+                            val optIntDe = I32Deserialize.asNullableDeserialize()
+                            while (true) {
+                                val key = access.nextKeySeed(SeedOf(StringDeserialize)).getOrThrow() ?: break
+                                when (key) {
+                                    "gating" -> gating = access.nextValueSeed(SeedOf(CrossAttentionGating)).getOrThrow()
+                                    "norm" -> norm = access.nextValueSeed(SeedOf(NormType)).getOrThrow()
+                                    "kv_in_dim" -> kvInDim = access.nextValueSeed(SeedOf(optIntDe)).getOrThrow()
+                                    else -> throw SerdeException(SerdeError.unknownField(key, CROSS_ATTENTION_CONFIG_FIELDS))
+                                }
+                            }
+                            CrossAttentionConfig(
+                                gating = gating ?: throw SerdeException(SerdeError.missingField("gating")),
+                                norm = norm ?: throw SerdeException(SerdeError.missingField("norm")),
+                                kvInDim = kvInDim,
+                            )
+                        }
+                },
+            )
+    }
+}
 
 public data class TransformerConfig(
     public val dModel: Int,
@@ -55,42 +155,185 @@ public data class TransformerConfig(
     public val dimFeedforward: Int,
     public val convLayout: Boolean,
     public val sharedCrossAttn: Boolean = false,
-)
+) {
+    public companion object : Deserialize<TransformerConfig> {
+        override fun <D> deserialize(deserializer: D): SerdeResult<TransformerConfig>
+            where D : Deserializer =
+            deserializer.deserializeStruct(
+                "Config",
+                TRANSFORMER_CONFIG_FIELDS,
+                object : Visitor<TransformerConfig> {
+                    override fun expecting(): String = "struct transformer::Config"
 
-@Serializable
-public enum class PositionalEmbedding {
-    @SerialName("Rope")
-    Rope,
-
-    @SerialName("Sin")
-    Sin,
-
-    @SerialName("None")
-    None,
+                    override fun <A> visitMap(access: A): SerdeResult<TransformerConfig>
+                        where A : MapAccess =
+                        serdeCatching {
+                            var dModel: Int? = null
+                            var numHeads: Int? = null
+                            var numLayers: Int? = null
+                            var causal: Boolean? = null
+                            var normFirst: Boolean? = null
+                            var biasFf: Boolean? = null
+                            var biasAttn: Boolean? = null
+                            var layerScale: Double? = null
+                            var positionalEmbedding: PositionalEmbedding? = null
+                            var useConvBlock: Boolean? = null
+                            var crossAttention: CrossAttentionConfig? = null
+                            var convKernelSize: Int? = null
+                            var useConvBias: Boolean? = null
+                            var gating: Activation? = null
+                            var norm: NormType? = null
+                            var context: Int? = null
+                            var maxPeriod: Int? = null
+                            var maxSeqLen: Int? = null
+                            var kvRepeat: Int? = null
+                            var dimFeedforward: Int? = null
+                            var convLayout: Boolean? = null
+                            var sharedCrossAttn = false
+                            val optF64De = F64Deserialize.asNullableDeserialize()
+                            val optCrossDe = CrossAttentionConfig.asNullableDeserialize()
+                            val optActDe = Activation.asNullableDeserialize()
+                            while (true) {
+                                val key = access.nextKeySeed(SeedOf(StringDeserialize)).getOrThrow() ?: break
+                                when (key) {
+                                    "d_model" -> dModel = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "num_heads" -> numHeads = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "num_layers" -> numLayers = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "causal" -> causal = access.nextValueSeed(SeedOf(BooleanDeserialize)).getOrThrow()
+                                    "norm_first" -> normFirst = access.nextValueSeed(SeedOf(BooleanDeserialize)).getOrThrow()
+                                    "bias_ff" -> biasFf = access.nextValueSeed(SeedOf(BooleanDeserialize)).getOrThrow()
+                                    "bias_attn" -> biasAttn = access.nextValueSeed(SeedOf(BooleanDeserialize)).getOrThrow()
+                                    "layer_scale" -> layerScale = access.nextValueSeed(SeedOf(optF64De)).getOrThrow()
+                                    "positional_embedding" -> positionalEmbedding = access.nextValueSeed(SeedOf(PositionalEmbedding)).getOrThrow()
+                                    "use_conv_block" -> useConvBlock = access.nextValueSeed(SeedOf(BooleanDeserialize)).getOrThrow()
+                                    "cross_attention" -> crossAttention = access.nextValueSeed(SeedOf(optCrossDe)).getOrThrow()
+                                    "conv_kernel_size" -> convKernelSize = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "use_conv_bias" -> useConvBias = access.nextValueSeed(SeedOf(BooleanDeserialize)).getOrThrow()
+                                    "gating" -> gating = access.nextValueSeed(SeedOf(optActDe)).getOrThrow()
+                                    "norm" -> norm = access.nextValueSeed(SeedOf(NormType)).getOrThrow()
+                                    "context" -> context = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "max_period" -> maxPeriod = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "max_seq_len" -> maxSeqLen = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "kv_repeat" -> kvRepeat = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "dim_feedforward" -> dimFeedforward = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "conv_layout" -> convLayout = access.nextValueSeed(SeedOf(BooleanDeserialize)).getOrThrow()
+                                    "shared_cross_attn" -> sharedCrossAttn = access.nextValueSeed(SeedOf(BooleanDeserialize)).getOrThrow()
+                                    else -> throw SerdeException(SerdeError.unknownField(key, TRANSFORMER_CONFIG_FIELDS))
+                                }
+                            }
+                            TransformerConfig(
+                                dModel = dModel ?: throw SerdeException(SerdeError.missingField("d_model")),
+                                numHeads = numHeads ?: throw SerdeException(SerdeError.missingField("num_heads")),
+                                numLayers = numLayers ?: throw SerdeException(SerdeError.missingField("num_layers")),
+                                causal = causal ?: throw SerdeException(SerdeError.missingField("causal")),
+                                normFirst = normFirst ?: throw SerdeException(SerdeError.missingField("norm_first")),
+                                biasFf = biasFf ?: throw SerdeException(SerdeError.missingField("bias_ff")),
+                                biasAttn = biasAttn ?: throw SerdeException(SerdeError.missingField("bias_attn")),
+                                layerScale = layerScale,
+                                positionalEmbedding =
+                                    positionalEmbedding ?: throw SerdeException(SerdeError.missingField("positional_embedding")),
+                                useConvBlock = useConvBlock ?: throw SerdeException(SerdeError.missingField("use_conv_block")),
+                                crossAttention = crossAttention,
+                                convKernelSize = convKernelSize ?: throw SerdeException(SerdeError.missingField("conv_kernel_size")),
+                                useConvBias = useConvBias ?: throw SerdeException(SerdeError.missingField("use_conv_bias")),
+                                gating = gating,
+                                norm = norm ?: throw SerdeException(SerdeError.missingField("norm")),
+                                context = context ?: throw SerdeException(SerdeError.missingField("context")),
+                                maxPeriod = maxPeriod ?: throw SerdeException(SerdeError.missingField("max_period")),
+                                maxSeqLen = maxSeqLen ?: throw SerdeException(SerdeError.missingField("max_seq_len")),
+                                kvRepeat = kvRepeat ?: throw SerdeException(SerdeError.missingField("kv_repeat")),
+                                dimFeedforward = dimFeedforward ?: throw SerdeException(SerdeError.missingField("dim_feedforward")),
+                                convLayout = convLayout ?: throw SerdeException(SerdeError.missingField("conv_layout")),
+                                sharedCrossAttn = sharedCrossAttn,
+                            )
+                        }
+                },
+            )
+    }
 }
 
-@Serializable
-public enum class CrossAttentionGating {
-    @SerialName("Normal")
+public enum class PositionalEmbedding : Serialize {
+    Rope,
+    Sin,
+    None,
+    ;
+
+    override fun <Ok> serialize(serializer: Serializer<Ok>): SerdeResult<Ok> =
+        when (this) {
+            Rope -> serializer.serializeUnitVariant("PositionalEmbedding", 0u, "Rope")
+            Sin -> serializer.serializeUnitVariant("PositionalEmbedding", 1u, "Sin")
+            None -> serializer.serializeUnitVariant("PositionalEmbedding", 2u, "None")
+        }
+
+    public companion object : Deserialize<PositionalEmbedding> {
+        override fun <D> deserialize(deserializer: D): SerdeResult<PositionalEmbedding>
+            where D : Deserializer =
+            deserializer.deserializeEnum(
+                "PositionalEmbedding",
+                POSITIONAL_EMBEDDING_VARIANTS,
+                object : Visitor<PositionalEmbedding> {
+                    override fun expecting(): String = "enum PositionalEmbedding"
+
+                    override fun visitStr(v: String): SerdeResult<PositionalEmbedding> =
+                        when (v) {
+                            "Rope" -> SerdeResult.success(Rope)
+                            "Sin" -> SerdeResult.success(Sin)
+                            "None" -> SerdeResult.success(None)
+                            else -> SerdeResult.failure(SerdeError.unknownVariant(v, POSITIONAL_EMBEDDING_VARIANTS))
+                        }
+
+                    override fun visitString(v: String): SerdeResult<PositionalEmbedding> = visitStr(v)
+
+                    override fun <A> visitEnum(access: A): SerdeResult<PositionalEmbedding>
+                        where A : EnumAccess =
+                        serdeCatching {
+                            val (variant, variantAccess) = access.variantSeed(SeedOf(StringDeserialize)).getOrThrow()
+                            variantAccess.unitVariant().getOrThrow()
+                            visitStr(variant).getOrThrow()
+                        }
+                },
+            )
+    }
+}
+
+public enum class CrossAttentionGating : Serialize {
     Normal,
-
-    @SerialName("ConstantGatedTanh")
     ConstantGatedTanh,
-
-    @SerialName("ConstantGatedSigmoid")
     ConstantGatedSigmoid,
-
-    @SerialName("ConditionalGatedTanh")
     ConditionalGatedTanh,
-
-    @SerialName("ConditionalGatedSigmoid")
     ConditionalGatedSigmoid,
-
-    @SerialName("ConditionalGatedSigmoidLearnableBias")
     ConditionalGatedSigmoidLearnableBias,
-
-    @SerialName("ConditionalGatedTanhLearnableBias")
     ConditionalGatedTanhLearnableBias,
+    ;
+
+    override fun <Ok> serialize(serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serializer.serializeUnitVariant("CrossAttentionGating", ordinal.toUInt(), name)
+
+    public companion object : Deserialize<CrossAttentionGating> {
+        override fun <D> deserialize(deserializer: D): SerdeResult<CrossAttentionGating>
+            where D : Deserializer =
+            deserializer.deserializeEnum(
+                "CrossAttentionGating",
+                CROSS_ATTENTION_GATING_VARIANTS,
+                object : Visitor<CrossAttentionGating> {
+                    override fun expecting(): String = "enum CrossAttentionGating"
+
+                    override fun visitStr(v: String): SerdeResult<CrossAttentionGating> =
+                        entries.firstOrNull { it.name == v }?.let { SerdeResult.success(it) }
+                            ?: SerdeResult.failure(SerdeError.unknownVariant(v, CROSS_ATTENTION_GATING_VARIANTS))
+
+                    override fun visitString(v: String): SerdeResult<CrossAttentionGating> = visitStr(v)
+
+                    override fun <A> visitEnum(access: A): SerdeResult<CrossAttentionGating>
+                        where A : EnumAccess =
+                        serdeCatching {
+                            val (variant, variantAccess) = access.variantSeed(SeedOf(StringDeserialize)).getOrThrow()
+                            variantAccess.unitVariant().getOrThrow()
+                            visitStr(variant).getOrThrow()
+                        }
+                },
+            )
+    }
 }
 
 public sealed class CaSrc {

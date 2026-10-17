@@ -1,4 +1,3 @@
-// port-lint: source N/A
 package io.github.kotlinmania.moshi.internal
 
 internal object MoshiJni {

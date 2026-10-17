@@ -9,37 +9,173 @@ import io.github.kotlinmania.candle.Tensor
 import io.github.kotlinmania.candle.bail
 import io.github.kotlinmania.candlenn.gumbelSoftmax
 import io.github.kotlinmania.candlenn.softmaxLastDim
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import io.github.kotlinmania.serde.SerdeError
+import io.github.kotlinmania.serde.SerdeException
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serde.serdeCatching
+import io.github.kotlinmania.serdecore.de.Deserialize
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.EnumAccess
+import io.github.kotlinmania.serdecore.de.F32Deserialize
+import io.github.kotlinmania.serdecore.de.F64Deserialize
+import io.github.kotlinmania.serdecore.de.I32Deserialize
+import io.github.kotlinmania.serdecore.de.MapAccess
+import io.github.kotlinmania.serdecore.de.StringDeserialize
+import io.github.kotlinmania.serdecore.de.U32Deserialize
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serialize
+import io.github.kotlinmania.serdecore.ser.Serializer
 
-@Serializable
-public sealed class AsrMsg {
-    @Serializable
-    @SerialName("Step")
+private val ASR_MSG_VARIANTS: List<String> = listOf("Step", "Word", "EndWord")
+private val ASR_STEP_FIELDS: List<String> = listOf("step_idx", "prs")
+private val ASR_WORD_FIELDS: List<String> = listOf("tokens", "start_time", "batch_idx")
+private val ASR_END_WORD_FIELDS: List<String> = listOf("stop_time", "batch_idx")
+
+public sealed class AsrMsg : Serialize {
     public data class Step(
-        @SerialName("step_idx")
         public val stepIdx: Int,
         public val prs: List<List<Float>>,
     ) : AsrMsg()
 
-    @Serializable
-    @SerialName("Word")
     public data class Word(
         public val tokens: List<UInt>,
-        @SerialName("start_time")
         public val startTime: Double,
-        @SerialName("batch_idx")
         public val batchIdx: Int,
     ) : AsrMsg()
 
-    @Serializable
-    @SerialName("EndWord")
     public data class EndWord(
-        @SerialName("stop_time")
         public val stopTime: Double,
-        @SerialName("batch_idx")
         public val batchIdx: Int,
     ) : AsrMsg()
+
+    override fun <Ok> serialize(serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serdeCatching {
+            when (this) {
+                is Step -> {
+                    val state = serializer.serializeStructVariant("AsrMsg", 0u, "Step", 2).getOrThrow()
+                    state.serializeField("step_idx", stepIdx.asSerialize()).getOrThrow()
+                    state
+                        .serializeField(
+                            "prs",
+                            prs.asListSerialize { inner -> inner.asListSerialize { it.asSerialize() } },
+                        ).getOrThrow()
+                    state.end().getOrThrow()
+                }
+
+                is Word -> {
+                    val state = serializer.serializeStructVariant("AsrMsg", 1u, "Word", 3).getOrThrow()
+                    state.serializeField("tokens", tokens.asListSerialize { it.asSerialize() }).getOrThrow()
+                    state.serializeField("start_time", startTime.asSerialize()).getOrThrow()
+                    state.serializeField("batch_idx", batchIdx.asSerialize()).getOrThrow()
+                    state.end().getOrThrow()
+                }
+
+                is EndWord -> {
+                    val state = serializer.serializeStructVariant("AsrMsg", 2u, "EndWord", 2).getOrThrow()
+                    state.serializeField("stop_time", stopTime.asSerialize()).getOrThrow()
+                    state.serializeField("batch_idx", batchIdx.asSerialize()).getOrThrow()
+                    state.end().getOrThrow()
+                }
+            }
+        }
+
+    public companion object : Deserialize<AsrMsg> {
+        private object StepVariantVisitor : Visitor<AsrMsg> {
+            override fun expecting(): String = "struct variant AsrMsg::Step"
+
+            override fun <A> visitMap(access: A): SerdeResult<AsrMsg>
+                where A : MapAccess =
+                serdeCatching {
+                    var stepIdx: Int? = null
+                    var prs: List<List<Float>>? = null
+                    val prsDe = F32Deserialize.asListDeserialize().asListDeserialize()
+                    while (true) {
+                        val key = access.nextKeySeed(SeedOf(StringDeserialize)).getOrThrow() ?: break
+                        when (key) {
+                            "step_idx" -> stepIdx = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                            "prs" -> prs = access.nextValueSeed(SeedOf(prsDe)).getOrThrow()
+                            else -> throw SerdeException(SerdeError.unknownField(key, ASR_STEP_FIELDS))
+                        }
+                    }
+                    Step(
+                        stepIdx = stepIdx ?: throw SerdeException(SerdeError.missingField("step_idx")),
+                        prs = prs ?: throw SerdeException(SerdeError.missingField("prs")),
+                    )
+                }
+        }
+
+        private object WordVariantVisitor : Visitor<AsrMsg> {
+            override fun expecting(): String = "struct variant AsrMsg::Word"
+
+            override fun <A> visitMap(access: A): SerdeResult<AsrMsg>
+                where A : MapAccess =
+                serdeCatching {
+                    var tokens: List<UInt>? = null
+                    var startTime: Double? = null
+                    var batchIdx: Int? = null
+                    val u32ListDe = U32Deserialize.asListDeserialize()
+                    while (true) {
+                        val key = access.nextKeySeed(SeedOf(StringDeserialize)).getOrThrow() ?: break
+                        when (key) {
+                            "tokens" -> tokens = access.nextValueSeed(SeedOf(u32ListDe)).getOrThrow()
+                            "start_time" -> startTime = access.nextValueSeed(SeedOf(F64Deserialize)).getOrThrow()
+                            "batch_idx" -> batchIdx = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                            else -> throw SerdeException(SerdeError.unknownField(key, ASR_WORD_FIELDS))
+                        }
+                    }
+                    Word(
+                        tokens = tokens ?: throw SerdeException(SerdeError.missingField("tokens")),
+                        startTime = startTime ?: throw SerdeException(SerdeError.missingField("start_time")),
+                        batchIdx = batchIdx ?: throw SerdeException(SerdeError.missingField("batch_idx")),
+                    )
+                }
+        }
+
+        private object EndWordVariantVisitor : Visitor<AsrMsg> {
+            override fun expecting(): String = "struct variant AsrMsg::EndWord"
+
+            override fun <A> visitMap(access: A): SerdeResult<AsrMsg>
+                where A : MapAccess =
+                serdeCatching {
+                    var stopTime: Double? = null
+                    var batchIdx: Int? = null
+                    while (true) {
+                        val key = access.nextKeySeed(SeedOf(StringDeserialize)).getOrThrow() ?: break
+                        when (key) {
+                            "stop_time" -> stopTime = access.nextValueSeed(SeedOf(F64Deserialize)).getOrThrow()
+                            "batch_idx" -> batchIdx = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                            else -> throw SerdeException(SerdeError.unknownField(key, ASR_END_WORD_FIELDS))
+                        }
+                    }
+                    EndWord(
+                        stopTime = stopTime ?: throw SerdeException(SerdeError.missingField("stop_time")),
+                        batchIdx = batchIdx ?: throw SerdeException(SerdeError.missingField("batch_idx")),
+                    )
+                }
+        }
+
+        override fun <D> deserialize(deserializer: D): SerdeResult<AsrMsg>
+            where D : Deserializer =
+            deserializer.deserializeEnum(
+                "AsrMsg",
+                ASR_MSG_VARIANTS,
+                object : Visitor<AsrMsg> {
+                    override fun expecting(): String = "enum AsrMsg"
+
+                    override fun <A> visitEnum(access: A): SerdeResult<AsrMsg>
+                        where A : EnumAccess =
+                        serdeCatching {
+                            val (variant, variantAccess) = access.variantSeed(SeedOf(StringDeserialize)).getOrThrow()
+                            when (variant) {
+                                "Step" -> variantAccess.structVariant(ASR_STEP_FIELDS, StepVariantVisitor).getOrThrow()
+                                "Word" -> variantAccess.structVariant(ASR_WORD_FIELDS, WordVariantVisitor).getOrThrow()
+                                "EndWord" -> variantAccess.structVariant(ASR_END_WORD_FIELDS, EndWordVariantVisitor).getOrThrow()
+                                else -> throw SerdeException(SerdeError.unknownVariant(variant, ASR_MSG_VARIANTS))
+                            }
+                        }
+                },
+            )
+    }
 }
 
 public class ItemState internal constructor(

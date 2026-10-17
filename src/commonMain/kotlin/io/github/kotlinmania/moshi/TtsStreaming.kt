@@ -12,39 +12,136 @@ import io.github.kotlinmania.candlenn.Linear
 import io.github.kotlinmania.candlenn.VarBuilder
 import io.github.kotlinmania.candlenn.linearNoBias
 import io.github.kotlinmania.candletransformers.generation.LogitsProcessor
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import io.github.kotlinmania.serde.SerdeError
+import io.github.kotlinmania.serde.SerdeException
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serde.serdeCatching
+import io.github.kotlinmania.serdecore.de.Deserialize
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.F64Deserialize
+import io.github.kotlinmania.serdecore.de.I32Deserialize
+import io.github.kotlinmania.serdecore.de.MapAccess
+import io.github.kotlinmania.serdecore.de.StringDeserialize
+import io.github.kotlinmania.serdecore.de.U32Deserialize
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serialize
+import io.github.kotlinmania.serdecore.ser.Serializer
 import kotlin.math.max
 import kotlin.math.min
 
-@Serializable
+private val TTS_STREAMING_CONFIG_FIELDS: List<String> =
+    listOf(
+        "acoustic_delay",
+        "text_pad_token",
+        "text_bos_token",
+        "text_eos_token",
+        "text_eop_token",
+        "text_start_token",
+        "text_audio_delay_in_tokens",
+        "max_consecutive_pads",
+        "extra_steps",
+        "speaker_cond_duration_s",
+        "speaker_cond_dim",
+        "speaker_cond_n_speakers",
+    )
+
 public data class TtsStreamingConfig(
-    @SerialName("acoustic_delay")
     public val acousticDelay: Int,
-    @SerialName("text_pad_token")
     public val textPadToken: UInt,
-    @SerialName("text_bos_token")
     public val textBosToken: UInt,
-    @SerialName("text_eos_token")
     public val textEosToken: UInt,
-    @SerialName("text_eop_token")
     public val textEopToken: UInt,
-    @SerialName("text_start_token")
     public val textStartToken: UInt,
-    @SerialName("text_audio_delay_in_tokens")
     public val textAudioDelayInTokens: Int,
-    @SerialName("max_consecutive_pads")
     public val maxConsecutivePads: Int,
-    @SerialName("extra_steps")
     public val extraSteps: Int,
-    @SerialName("speaker_cond_duration_s")
     public val speakerCondDurationS: Double,
-    @SerialName("speaker_cond_dim")
     public val speakerCondDim: Int,
-    @SerialName("speaker_cond_n_speakers")
     public val speakerCondNSpeakers: Int,
-) {
-    public companion object {
+) : Serialize {
+    override fun <Ok> serialize(serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serdeCatching {
+            val state = serializer.serializeStruct("Config", 12).getOrThrow()
+            state.serializeField("acoustic_delay", acousticDelay.asSerialize()).getOrThrow()
+            state.serializeField("text_pad_token", textPadToken.asSerialize()).getOrThrow()
+            state.serializeField("text_bos_token", textBosToken.asSerialize()).getOrThrow()
+            state.serializeField("text_eos_token", textEosToken.asSerialize()).getOrThrow()
+            state.serializeField("text_eop_token", textEopToken.asSerialize()).getOrThrow()
+            state.serializeField("text_start_token", textStartToken.asSerialize()).getOrThrow()
+            state.serializeField("text_audio_delay_in_tokens", textAudioDelayInTokens.asSerialize()).getOrThrow()
+            state.serializeField("max_consecutive_pads", maxConsecutivePads.asSerialize()).getOrThrow()
+            state.serializeField("extra_steps", extraSteps.asSerialize()).getOrThrow()
+            state.serializeField("speaker_cond_duration_s", speakerCondDurationS.asSerialize()).getOrThrow()
+            state.serializeField("speaker_cond_dim", speakerCondDim.asSerialize()).getOrThrow()
+            state.serializeField("speaker_cond_n_speakers", speakerCondNSpeakers.asSerialize()).getOrThrow()
+            state.end().getOrThrow()
+        }
+
+    public companion object : Deserialize<TtsStreamingConfig> {
+        override fun <D> deserialize(deserializer: D): SerdeResult<TtsStreamingConfig>
+            where D : Deserializer =
+            deserializer.deserializeStruct(
+                "Config",
+                TTS_STREAMING_CONFIG_FIELDS,
+                object : Visitor<TtsStreamingConfig> {
+                    override fun expecting(): String = "struct tts_streaming::Config"
+
+                    override fun <A> visitMap(access: A): SerdeResult<TtsStreamingConfig>
+                        where A : MapAccess =
+                        serdeCatching {
+                            var acousticDelay: Int? = null
+                            var textPadToken: UInt? = null
+                            var textBosToken: UInt? = null
+                            var textEosToken: UInt? = null
+                            var textEopToken: UInt? = null
+                            var textStartToken: UInt? = null
+                            var textAudioDelayInTokens: Int? = null
+                            var maxConsecutivePads: Int? = null
+                            var extraSteps: Int? = null
+                            var speakerCondDurationS: Double? = null
+                            var speakerCondDim: Int? = null
+                            var speakerCondNSpeakers: Int? = null
+                            while (true) {
+                                val key = access.nextKeySeed(SeedOf(StringDeserialize)).getOrThrow() ?: break
+                                when (key) {
+                                    "acoustic_delay" -> acousticDelay = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "text_pad_token" -> textPadToken = access.nextValueSeed(SeedOf(U32Deserialize)).getOrThrow()
+                                    "text_bos_token" -> textBosToken = access.nextValueSeed(SeedOf(U32Deserialize)).getOrThrow()
+                                    "text_eos_token" -> textEosToken = access.nextValueSeed(SeedOf(U32Deserialize)).getOrThrow()
+                                    "text_eop_token" -> textEopToken = access.nextValueSeed(SeedOf(U32Deserialize)).getOrThrow()
+                                    "text_start_token" -> textStartToken = access.nextValueSeed(SeedOf(U32Deserialize)).getOrThrow()
+                                    "text_audio_delay_in_tokens" -> textAudioDelayInTokens = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "max_consecutive_pads" -> maxConsecutivePads = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "extra_steps" -> extraSteps = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "speaker_cond_duration_s" -> speakerCondDurationS = access.nextValueSeed(SeedOf(F64Deserialize)).getOrThrow()
+                                    "speaker_cond_dim" -> speakerCondDim = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "speaker_cond_n_speakers" -> speakerCondNSpeakers = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    else -> throw SerdeException(SerdeError.unknownField(key, TTS_STREAMING_CONFIG_FIELDS))
+                                }
+                            }
+                            TtsStreamingConfig(
+                                acousticDelay = acousticDelay ?: throw SerdeException(SerdeError.missingField("acoustic_delay")),
+                                textPadToken = textPadToken ?: throw SerdeException(SerdeError.missingField("text_pad_token")),
+                                textBosToken = textBosToken ?: throw SerdeException(SerdeError.missingField("text_bos_token")),
+                                textEosToken = textEosToken ?: throw SerdeException(SerdeError.missingField("text_eos_token")),
+                                textEopToken = textEopToken ?: throw SerdeException(SerdeError.missingField("text_eop_token")),
+                                textStartToken = textStartToken ?: throw SerdeException(SerdeError.missingField("text_start_token")),
+                                textAudioDelayInTokens =
+                                    textAudioDelayInTokens
+                                        ?: throw SerdeException(SerdeError.missingField("text_audio_delay_in_tokens")),
+                                maxConsecutivePads =
+                                    maxConsecutivePads ?: throw SerdeException(SerdeError.missingField("max_consecutive_pads")),
+                                extraSteps = extraSteps ?: throw SerdeException(SerdeError.missingField("extra_steps")),
+                                speakerCondDurationS =
+                                    speakerCondDurationS ?: throw SerdeException(SerdeError.missingField("speaker_cond_duration_s")),
+                                speakerCondDim = speakerCondDim ?: throw SerdeException(SerdeError.missingField("speaker_cond_dim")),
+                                speakerCondNSpeakers =
+                                    speakerCondNSpeakers ?: throw SerdeException(SerdeError.missingField("speaker_cond_n_speakers")),
+                            )
+                        }
+                },
+            )
+
         public fun v202501(): TtsStreamingConfig =
             TtsStreamingConfig(
                 acousticDelay = 2,

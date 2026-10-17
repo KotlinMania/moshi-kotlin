@@ -7,38 +7,112 @@ import io.github.kotlinmania.candle.Tensor
 import io.github.kotlinmania.candle.bail
 import io.github.kotlinmania.candle.i
 import io.github.kotlinmania.candletransformers.generation.LogitsProcessor
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import io.github.kotlinmania.serde.SerdeError
+import io.github.kotlinmania.serde.SerdeException
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serde.serdeCatching
+import io.github.kotlinmania.serdecore.de.Deserialize
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.I32Deserialize
+import io.github.kotlinmania.serdecore.de.MapAccess
+import io.github.kotlinmania.serdecore.de.StringDeserialize
+import io.github.kotlinmania.serdecore.de.U32Deserialize
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serialize
+import io.github.kotlinmania.serdecore.ser.Serializer
 import kotlin.math.exp
 import kotlin.math.max
 import kotlin.math.min
 
 public const val UNGENERATED: UInt = UInt.MAX_VALUE
 
-@Serializable
+private val MULTI_STREAM_CONFIG_FIELDS: List<String> =
+    listOf(
+        "generated_audio_codebooks",
+        "input_audio_codebooks",
+        "audio_vocab_size",
+        "acoustic_delay",
+        "text_pad_token",
+        "text_eop_token",
+        "text_start_token",
+    )
+
 public data class RepetitionPenaltyConfig(
     public val contextSize: Int,
     public val penalty: Float,
 )
 
-@Serializable
 public data class MultiStreamConfig(
-    @SerialName("generated_audio_codebooks")
     public val generatedAudioCodebooks: Int,
-    @SerialName("input_audio_codebooks")
     public val inputAudioCodebooks: Int,
-    @SerialName("audio_vocab_size")
     public val audioVocabSize: Int,
-    @SerialName("acoustic_delay")
     public val acousticDelay: Int,
-    @SerialName("text_pad_token")
     public val textPadToken: UInt,
-    @SerialName("text_eop_token")
     public val textEopToken: UInt,
-    @SerialName("text_start_token")
     public val textStartToken: UInt,
-) {
-    public companion object {
+) : Serialize {
+    override fun <Ok> serialize(serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serdeCatching {
+            val state = serializer.serializeStruct("Config", 7).getOrThrow()
+            state.serializeField("generated_audio_codebooks", generatedAudioCodebooks.asSerialize()).getOrThrow()
+            state.serializeField("input_audio_codebooks", inputAudioCodebooks.asSerialize()).getOrThrow()
+            state.serializeField("audio_vocab_size", audioVocabSize.asSerialize()).getOrThrow()
+            state.serializeField("acoustic_delay", acousticDelay.asSerialize()).getOrThrow()
+            state.serializeField("text_pad_token", textPadToken.asSerialize()).getOrThrow()
+            state.serializeField("text_eop_token", textEopToken.asSerialize()).getOrThrow()
+            state.serializeField("text_start_token", textStartToken.asSerialize()).getOrThrow()
+            state.end().getOrThrow()
+        }
+
+    public companion object : Deserialize<MultiStreamConfig> {
+        override fun <D> deserialize(deserializer: D): SerdeResult<MultiStreamConfig>
+            where D : Deserializer =
+            deserializer.deserializeStruct(
+                "Config",
+                MULTI_STREAM_CONFIG_FIELDS,
+                object : Visitor<MultiStreamConfig> {
+                    override fun expecting(): String = "struct lm_generate_multistream::Config"
+
+                    override fun <A> visitMap(access: A): SerdeResult<MultiStreamConfig>
+                        where A : MapAccess =
+                        serdeCatching {
+                            var generatedAudioCodebooks: Int? = null
+                            var inputAudioCodebooks: Int? = null
+                            var audioVocabSize: Int? = null
+                            var acousticDelay: Int? = null
+                            var textPadToken: UInt? = null
+                            var textEopToken: UInt? = null
+                            var textStartToken: UInt? = null
+                            while (true) {
+                                val key = access.nextKeySeed(SeedOf(StringDeserialize)).getOrThrow() ?: break
+                                when (key) {
+                                    "generated_audio_codebooks" -> generatedAudioCodebooks = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "input_audio_codebooks" -> inputAudioCodebooks = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "audio_vocab_size" -> audioVocabSize = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "acoustic_delay" -> acousticDelay = access.nextValueSeed(SeedOf(I32Deserialize)).getOrThrow()
+                                    "text_pad_token" -> textPadToken = access.nextValueSeed(SeedOf(U32Deserialize)).getOrThrow()
+                                    "text_eop_token" -> textEopToken = access.nextValueSeed(SeedOf(U32Deserialize)).getOrThrow()
+                                    "text_start_token" -> textStartToken = access.nextValueSeed(SeedOf(U32Deserialize)).getOrThrow()
+                                    else -> throw SerdeException(SerdeError.unknownField(key, MULTI_STREAM_CONFIG_FIELDS))
+                                }
+                            }
+                            MultiStreamConfig(
+                                generatedAudioCodebooks =
+                                    generatedAudioCodebooks
+                                        ?: throw SerdeException(SerdeError.missingField("generated_audio_codebooks")),
+                                inputAudioCodebooks =
+                                    inputAudioCodebooks
+                                        ?: throw SerdeException(SerdeError.missingField("input_audio_codebooks")),
+                                audioVocabSize = audioVocabSize ?: throw SerdeException(SerdeError.missingField("audio_vocab_size")),
+                                acousticDelay = acousticDelay ?: throw SerdeException(SerdeError.missingField("acoustic_delay")),
+                                textPadToken = textPadToken ?: throw SerdeException(SerdeError.missingField("text_pad_token")),
+                                textEopToken = textEopToken ?: throw SerdeException(SerdeError.missingField("text_eop_token")),
+                                textStartToken = textStartToken ?: throw SerdeException(SerdeError.missingField("text_start_token")),
+                            )
+                        }
+                },
+            )
+
         public fun v01(): MultiStreamConfig =
             MultiStreamConfig(
                 generatedAudioCodebooks = 8,
