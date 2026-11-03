@@ -143,7 +143,6 @@ If you wish to install from a clone of this repository, maybe to further develop
 ```bash
 # From the current folder (e.g. `moshi/`)
 pip install -e '.[dev]'
-pre-commit install
 ```
 
 Once locally installed, Mimi can be tested with the following command, from **the root** of the repository,

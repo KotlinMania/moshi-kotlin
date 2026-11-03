@@ -8,7 +8,7 @@ However, we certainly welcome them for bug fixes.
 
 1. Fork the repo and create your branch from `main`.
 2. If you have changed APIs, update the documentation accordingly.
-3. Ensure pre-commit hooks pass properly, in particular the linting and typing.
+3. Run the Kotlin project's Gradle checks with `./gradlew check`. The copied Python application hooks and root development requirements have been retired from this Kotlin checkout. Retained PyTorch/MLX application source is upstream reference material; Kotlin checks do not establish its runtime or typing behavior.
 4. When changing the Rust code, run `cargo check`, `cargo clippy`, `cargo test`.
 5. Accept the Contributor License Agreement (see after).
 

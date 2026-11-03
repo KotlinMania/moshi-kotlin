@@ -248,12 +248,13 @@ docker compose up
 
 ## Development
 
+This Kotlin checkout uses Gradle for maintained build checks. The application setup below is retained as upstream reference material; the copied Python pre-commit hooks have been retired. Kotlin/Java validation does not establish PyTorch or MLX application behavior.
+
 If you wish to install from a clone of this repository, maybe to further develop Moshi, you can do the following:
 ```bash
 # From the root of the clone of the repo
 pip install -e 'moshi[dev]'
 pip install -e 'moshi_mlx[dev]'
-pre-commit install
 ```
 
 If you wish to build locally `rustymimi` (assuming you have Rust properly installed):

@@ -5,6 +5,6 @@
 ### `moshi` (`moshi-core`)
 
 #### `moshi::NormType`
-- Domain file: `src/commonMain/kotlin/io/github/kotlinmania/moshi/NormType.kt`
+- Domain file: `src/common/commonMain/kotlin/io/github/kotlinmania/moshi/NormType.kt`
 - Upstream source: `rust/moshi-core/src/lib.rs:26-30`
-- Callers: `src/commonMain/kotlin/io/github/kotlinmania/moshi/Transformer.kt`
+- Callers: `src/common/commonMain/kotlin/io/github/kotlinmania/moshi/Transformer.kt`
